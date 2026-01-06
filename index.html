@@ -22,7 +22,7 @@
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
       overflow:hidden;
 
-      /* ✅ LINE/iOS 文字自動放大修正（關鍵） */
+      /* ✅ LINE/iOS 文字自動放大修正 */
       -webkit-text-size-adjust: 100%;
       text-size-adjust: 100%;
     }
@@ -500,7 +500,7 @@
   const clamp = (v,a,b)=> Math.max(a, Math.min(b, v));
   const dist2 = (ax,ay,bx,by)=> { const dx=ax-bx, dy=ay-by; return dx*dx+dy*dy; };
 
-  // ===== Audio =====
+  // ===== Audio Core =====
   let audioOn = true;
   let actx = null;
 
@@ -509,22 +509,184 @@
     if(actx && actx.state === "suspended") actx.resume?.();
   }
 
-  function beep(freq=440, dur=0.06, type="sine", gain=0.04){
-    if(!audioOn) return;
+  // ========= 8-bit Q彈音效（方波/短包絡/小滑音）=========
+  function audioOk(){
+    if(!audioOn) return false;
+    try { ensureAudio(); return true; } catch(_) { return false; }
+  }
+
+  function makeGainADSR(g, t0, a=0.004, d=0.05, s=0.0001, r=0.02, peak=0.06){
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(Math.max(peak, 0.0002), t0 + a);
+    g.gain.exponentialRampToValueAtTime(Math.max(peak*0.45, 0.0002), t0 + a + d);
+    g.gain.exponentialRampToValueAtTime(Math.max(s, 0.0001), t0 + a + d + r);
+  }
+
+  // 8-bit「Q彈啵」：抓碎片/按鈕用
+  function bitPop(freq=740, gain=0.055){
+    if(!audioOk()) return;
+    const t0 = actx.currentTime;
+
+    const o = actx.createOscillator();
+    const g = actx.createGain();
+    const f = actx.createBiquadFilter();
+
+    o.type = "square";
+    o.frequency.setValueAtTime(freq*1.25, t0);
+    o.frequency.exponentialRampToValueAtTime(freq*0.92, t0 + 0.07);
+
+    f.type = "lowpass";
+    f.frequency.setValueAtTime(2200, t0);
+    f.Q.value = 0.7;
+
+    makeGainADSR(g, t0, 0.003, 0.03, 0.00012, 0.035, gain);
+
+    o.connect(f); f.connect(g); g.connect(actx.destination);
+    o.start(t0);
+    o.stop(t0 + 0.11);
+  }
+
+  // 8-bit「叮叮」：回聲/金魚/開始成功用
+  function bitDing(gain=0.06){
+    if(!audioOk()) return;
+    const t0 = actx.currentTime;
+
+    const o = actx.createOscillator();
+    const g = actx.createGain();
+    const f = actx.createBiquadFilter();
+
+    o.type = "square";
+    f.type = "lowpass";
+    f.frequency.setValueAtTime(2600, t0);
+    f.Q.value = 0.6;
+
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(gain, t0 + 0.004);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.16);
+
+    o.frequency.setValueAtTime(784, t0);         // G5
+    o.frequency.setValueAtTime(1046.5, t0+0.08); // C6
+
+    o.connect(f); f.connect(g); g.connect(actx.destination);
+    o.start(t0);
+    o.stop(t0 + 0.18);
+  }
+
+  // 8-bit「噗」：破網用
+  function bitThud(){
+    if(!audioOk()) return;
+    const t0 = actx.currentTime;
+
+    const o = actx.createOscillator();
+    const g = actx.createGain();
+    const f = actx.createBiquadFilter();
+
+    o.type = "square";
+    o.frequency.setValueAtTime(220, t0);
+    o.frequency.exponentialRampToValueAtTime(110, t0 + 0.10);
+
+    f.type = "lowpass";
+    f.frequency.setValueAtTime(900, t0);
+    f.Q.value = 0.9;
+
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(0.07, t0 + 0.006);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.14);
+
+    o.connect(f); f.connect(g); g.connect(actx.destination);
+    o.start(t0);
+    o.stop(t0 + 0.16);
+  }
+
+  // 小顆粒（更街機）
+  function bitTick(gain=0.02){
+    if(!audioOk()) return;
+    const t0 = actx.currentTime;
+
+    const buf = actx.createBuffer(1, actx.sampleRate * 0.02, actx.sampleRate);
+    const data = buf.getChannelData(0);
+    for(let i=0;i<data.length;i++){
+      data[i] = (Math.random()*2-1) * Math.exp(-i/(data.length/6));
+    }
+    const src = actx.createBufferSource();
+    const g = actx.createGain();
+    const f = actx.createBiquadFilter();
+
+    src.buffer = buf;
+    f.type="highpass";
+    f.frequency.value = 1200;
+
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(gain, t0 + 0.002);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.03);
+
+    src.connect(f); f.connect(g); g.connect(actx.destination);
+    src.start(t0);
+  }
+
+  // ========= 8-bit 環境音樂（遊戲進行中）=========
+  let bgm = null;
+
+  function startBgm8bit(){
+    if(!audioOn || bgm) return;
     try{
       ensureAudio();
-      const o = actx.createOscillator();
-      const g = actx.createGain();
-      o.type = type;
-      o.frequency.value = freq;
-      g.gain.value = gain;
-      o.connect(g); g.connect(actx.destination);
-      o.start();
-      o.stop(actx.currentTime + dur);
+      const t0 = actx.currentTime;
+
+      const o1 = actx.createOscillator();
+      const o2 = actx.createOscillator();
+      const gPad = actx.createGain();
+      const lp = actx.createBiquadFilter();
+
+      o1.type = "square";
+      o2.type = "square";
+
+      // C 小和弦：C4 + E4（超輕）
+      o1.frequency.value = 261.63;
+      o2.frequency.value = 329.63;
+
+      lp.type = "lowpass";
+      lp.frequency.value = 1200;
+      lp.Q.value = 0.7;
+
+      gPad.gain.setValueAtTime(0.0001, t0);
+      gPad.gain.exponentialRampToValueAtTime(0.006, t0 + 0.8);
+
+      o1.connect(lp); o2.connect(lp);
+      lp.connect(gPad); gPad.connect(actx.destination);
+
+      o1.start(); o2.start();
+
+      let step = 0;
+      const tempo = 92; // bpm
+      const interval = 60/tempo/2; // 8th
+      const timer = setInterval(()=>{
+        if(!audioOn || !bgm) return;
+        if(step % 2 === 0) bitPop(420 + (step%8===0?120:0), 0.02);
+        step++;
+      }, interval*1000);
+
+      bgm = { o1,o2,gPad,timer };
     }catch(_){}
   }
 
-  // 🌙 夜間輕鈴
+  function stopBgm8bit(){
+    if(!bgm) return;
+    try{
+      clearInterval(bgm.timer);
+      const t0 = actx.currentTime;
+      bgm.gPad.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.25);
+      setTimeout(()=>{
+        try{ bgm.o1.stop(); }catch(_){}
+        try{ bgm.o2.stop(); }catch(_){}
+        bgm = null;
+      }, 300);
+    }catch(_){
+      bgm = null;
+    }
+  }
+
+  // 🌙 夜間輕鈴（保留）
   function nightBell(){
     if(!audioOn) return;
     try{
@@ -584,7 +746,7 @@
     modeText.textContent = extra ? `模式：${mode}｜${extra}` : `模式：${mode}`;
   }
 
-  // ===== 整點 100% 探索提示（仍保留機制，但不在 UI 文案描述）=====
+  // ===== 整點必觸發（機制保留；不在玩法視窗說明）=====
   let lastHourlyStamp = "";
   function hourlyStamp(d){
     return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}-${d.getHours()}`;
@@ -783,14 +945,19 @@
     setDurUI();
     updateModeUI(new Date());
 
-    // ✅ 遊戲中隱藏快速開始
     quickStart.style.display = "none";
+
+    // ✅ 遊戲中啟動 8-bit 環境音樂
+    startBgm8bit();
 
     showToast("鹿鹿：碎片就交給你了。");
   }
 
   function endGame(){
     running=false;
+
+    // ✅ 結算停 BGM
+    stopBgm8bit();
 
     const night = document.body.classList.contains("fish-night");
     const arr = loadRank();
@@ -807,10 +974,7 @@
     resultText.innerHTML = `結算：<b>${score}</b> 分｜破網 <b>${breaks}</b> 次｜最高連擊 <b>${maxCombo}</b>｜金魚 <b>${fishHits}</b>｜稱號：<b>${displayTitle(score)}</b>${night ? " <b>🌙</b>" : ""}`;
     overlay.style.display="grid";
 
-    // ✅ 結算 overlay 不縮小
     panel.classList.remove("tutorial-shrink");
-
-    // ✅ 結算後顯示快速開始
     quickStart.style.display = "block";
   }
 
@@ -818,11 +982,11 @@
     const msg = hourlyHintPool[(Math.random()*hourlyHintPool.length)|0];
     echoBoostTimer = 12;
     shards.push(makeHourlyEchoShard());
-    beep(820, 0.09, "triangle", 0.06);
+    bitDing(0.055);
     showToast(msg + "\n✨整點回聲碎片已刷新！");
   }
 
-  // ===== 唯一加分入口（修正分數自增） =====
+  // ===== 唯一加分入口 =====
   function catchShard(s, nowDate){
     s.alive=false;
 
@@ -839,11 +1003,13 @@
     net.durability -= rand(s.type.dmg[0], s.type.dmg[1]);
     spawnPop(s.x, s.y, `+${add}`);
 
+    // ✅ 8-bit Q彈音效
     if(s.type.key==="echo" || s.type.key==="echo_hourly"){
       showToast("✨探索提示：你撈到了一段不穩定的回聲。");
-      beep(740,0.07,"triangle",0.05);
+      bitDing(0.055);
     }else{
-      beep(560,0.05,"triangle",0.04);
+      bitPop(720, 0.05);
+      bitTick(0.015);
     }
 
     if(net.durability<=0){ breakNet(); return; }
@@ -872,7 +1038,7 @@
     spawnPop(net.x, net.y-10, `+${add}`);
 
     showToast(isFishNight(nowDate) ? "🌙撈到夜金魚！鹿鹿：今晚很旺。" : "🎉撈到金魚！鹿鹿：運氣不錯。");
-    beep(980,0.09,"triangle",0.06);
+    bitDing(0.07);
 
     if(net.durability<=0){ breakNet(); return; }
     setDurUI();
@@ -892,7 +1058,7 @@
     uiCombo.textContent=combo;
 
     showToast("鹿鹿：網子破了…別硬撐啦。");
-    beep(220,0.10,"sawtooth",0.03);
+    bitThud();
   }
 
   // ===== Input =====
@@ -925,7 +1091,7 @@
 
   window.addEventListener('keydown', (e)=>{
     if(e.key.toLowerCase()==="r"){
-      if(running){ resetGame(); beep(520,0.05,"triangle",0.05); }
+      if(running){ resetGame(); bitPop(760, 0.045); }
     }
   });
 
@@ -942,7 +1108,7 @@
 
     overlay.style.display="none";
     resetGame();
-    beep(660,0.06,"triangle",0.06);
+    bitPop(780, 0.05);
     tryLockLandscape();
   }
 
@@ -951,15 +1117,15 @@
 
   muteBtn.addEventListener('click', ()=>{
     audioOn = !audioOn;
-    if(!audioOn) stopNightBgm();
+    if(!audioOn) { stopNightBgm(); stopBgm8bit(); }
     muteBtn.textContent = `音效：${audioOn ? "開" : "關"}`;
-    beep(380,0.05,"sine",0.03);
+    bitPop(520, 0.03);
   });
 
   resetRankBtn.addEventListener('click', ()=>{
     saveRank([]); // 只清今天
     renderRank();
-    beep(320,0.06,"sine",0.03);
+    bitPop(520, 0.03);
   });
 
   // ===== Spawn pacing =====
@@ -1006,7 +1172,7 @@
         uiTime.textContent = String(Math.ceil(timeLeft));
       }
 
-      // ✅ 整點必觸發（不再在 UI 文案中描述）
+      // ✅ 整點必觸發
       if (nowDate.getMinutes() === 0) {
         const stamp = hourlyStamp(nowDate);
         if (stamp !== lastHourlyStamp) {
@@ -1026,7 +1192,7 @@
       if(!net.broken && net.cooldown<=0) net.down = pointer.pressed;
       if(net.cooldown>0) net.cooldown -= dt;
 
-      // spawn shards（暴走：密度↑；速度不變已從文案移除；實作仍維持速度）
+      // spawn shards（暴走：密度↑）
       spawnTimer += dt;
       const frenzy = isFrenzy(nowDate);
       const spawnEvery = frenzy ? 0.42 : 0.60;
@@ -1049,7 +1215,7 @@
           if(Math.random() < p){
             fish = makeFish();
             showToast(nowFish ? "🌙金魚之夜：金色游影出沒！" : "✨金魚驚喜出現！");
-            beep(880,0.08,"triangle",0.05);
+            bitPop(880, 0.04);
           }
         }
       }
@@ -1059,11 +1225,9 @@
         if(!s.alive) continue;
         s.tw += dt*5;
 
-        // 輕微漂移（可預測）
         s.vx += Math.sin(s.tw)*10*dt;
         s.vy += Math.cos(s.tw*0.9)*7*dt;
 
-        // ✅ 最高速度上限（統一）
         const sp = Math.hypot(s.vx,s.vy);
         const maxSp = 78;
         if(sp > maxSp){ s.vx *= maxSp/sp; s.vy *= maxSp/sp; }
@@ -1071,7 +1235,6 @@
         s.x += s.vx*dt;
         s.y += s.vy*dt;
 
-        // 溫和邊界回彈
         if(s.x < 70)    s.vx += 85*dt;
         if(s.x > W-70)  s.vx -= 85*dt;
         if(s.y < 120)   s.vy += 65*dt;
@@ -1080,7 +1243,7 @@
         s.x = clamp(s.x, 60, W-60);
         s.y = clamp(s.y, 110, H-60);
 
-        // ✅ 微躲（更慢、更好瞄準）
+        // 微躲（好瞄準）
         if(net.down && !net.broken){
           const d2 = dist2(net.x, net.y, s.x, s.y);
           const fearR = 140;
@@ -1142,7 +1305,7 @@
         net.durability=maxDurability;
         setDurUI();
         showToast("鹿鹿：換新網了，繼續撈。");
-        beep(520,0.05,"sine",0.04);
+        bitPop(620, 0.04);
       }
     }
 
@@ -1155,7 +1318,6 @@
     ctx.clearRect(0,0,W,H);
     const t = performance.now()/1000;
 
-    // ripples（少量，省效能）
     ctx.globalAlpha = 0.20;
     for(let i=0;i<5;i++){
       ctx.beginPath();
@@ -1170,7 +1332,6 @@
     for(const s of shards){ if(s.alive) drawShard(s); }
     if(fish && fish.alive) drawFish(fish);
 
-    // pops（夜間金色跳字）
     for(const p of pops){
       ctx.save();
       ctx.globalAlpha = clamp(p.t/0.7, 0, 1);
@@ -1199,7 +1360,6 @@
     const a = performance.now()/700 + s.tw;
     ctx.rotate(a);
 
-    // 🌙 夜間金色軌跡暈影
     if(isNight){
       ctx.globalAlpha = 0.25;
       ctx.beginPath();
@@ -1301,7 +1461,7 @@
   // ===== 初始顯示 =====
   renderRank();
 
-  // ✅ 第一次顯示教學（並縮小 0.75）；之後只留快速開始
+  // ✅ 第一次顯示教學（縮小 0.75）；之後只留快速開始
   let seen = false;
   try { seen = localStorage.getItem(LS_TUTORIAL_SEEN) === "1"; } catch(_) {}
 
