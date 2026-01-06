@@ -597,7 +597,7 @@
       ensureAudio();
 
       const master = actx.createGain();
-      master.gain.value = 0.020; // ✅ 輕鬆但不吵
+      master.gain.value = 0.030; // ✅ 輕鬆但不吵
       master.connect(actx.destination);
 
       const lp = actx.createBiquadFilter();
@@ -621,7 +621,7 @@
       ];
       const scale = [60, 62, 64, 67, 69, 72]; // C D E G A C
 
-      const bpm = 120;
+      const bpm = 122;
       const stepSec = 60 / bpm / 2;
       let step = 0;
 
