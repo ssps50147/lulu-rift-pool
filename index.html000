@@ -1,295 +1,1014 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
-<title>裂縫水池：鹿粉撈撈祭</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>阿鹿鹿接接樂</title>
 
-<style>
-/* ===== 基本色系 ===== */
-:root{
-  --pool:#2aa6ff;
-  --hud:rgba(255,255,255,.65);
-  --ink:#0a1220;
-}
-body{
-  margin:0;
-  height:100vh;
-  background:radial-gradient(1200px 700px at 50% 20%,#1a325a,#081225);
-  font-family:system-ui,"Noto Sans TC","Microsoft JhengHei";
-  overflow:hidden;
-}
-.wrap{height:100%;display:grid;place-items:center;}
-.frame{
-  position:relative;
-  width:100vw;
-  height:100dvh;
-  background:radial-gradient(circle at 50% 25%,#a7f3ff,var(--pool),#063254);
-}
-canvas{width:100%;height:100%;display:block}
+  <!-- LIFF SDK -->
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
-/* ===== HUD ===== */
-.hud{
-  position:absolute;top:12px;left:12px;right:12px;
-  display:flex;gap:8px;flex-wrap:wrap;z-index:5
-}
-.card{
-  background:var(--hud);
-  border-radius:16px;
-  padding:8px 12px;
-  color:var(--ink);
-  flex:1;
-  min-width:140px;
-}
+  <style>
+    :root{
+      --bg1:#ffd6e7;
+      --bg2:#fff4f9;
+      --card:#ffffffcc;
+      --text:#111;
+    }
+    html,body{
+      height:100%;
+      margin:0;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", Arial, sans-serif;
+      background: linear-gradient(180deg,var(--bg1),var(--bg2));
+      overflow:hidden;
+      touch-action: none;
+    }
 
-/* ===== Overlay ===== */
-.overlay{
-  position:absolute;inset:0;
-  background:#0007;
-  display:grid;place-items:center;
-  z-index:10
-}
-.panel{
-  background:#fff;
-  border-radius:22px;
-  padding:18px;
-  max-width:90%;
-  color:#111;
-}
+    #game{
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+    }
 
-/* ===== Buttons ===== */
-button{
-  padding:10px 14px;
-  border-radius:18px;
-  border:none;
-  background:#111;
-  color:#fff;
-  font-weight:800;
-  cursor:pointer;
-}
+    /* HUD */
+    #hud{
+      position:absolute;
+      top: 14px;
+      left: 14px;
+      right: 14px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      z-index: 10;
+      pointer-events:none;
+    }
 
-/* ===== Toast ===== */
-.toast{
-  position:absolute;top:90px;left:12px;right:12px;
-  background:#fff9;
-  border-radius:16px;
-  padding:10px 12px;
-  opacity:0;
-  transition:.25s;
-  z-index:20
-}
-.toast.show{opacity:1}
+    .pill{
+      pointer-events:auto;
+      background: var(--card);
+      border-radius: 18px;
+      padding: 10px 14px;
+      font-weight: 800;
+      box-shadow: 0 10px 30px rgba(0,0,0,.10);
+      display:flex;
+      align-items:center;
+      gap:8px;
+      color:var(--text);
+      user-select:none;
+      -webkit-user-select:none;
+    }
 
-/* ===== LIFF ===== */
-.liffbar{
-  position:absolute;top:12px;right:12px;z-index:30
-}
-.liffbar button{
-  background:#000a;color:#fff
-}
+    .pill.small{
+      font-weight:700;
+      padding: 10px 12px;
+    }
 
-/* ===== 直向鎖定遮罩 ===== */
-.portrait-lock{
-  position:absolute;inset:0;
-  display:none;
-  backdrop-filter:blur(10px);
-  background:rgba(0,0,0,.5);
-  place-items:center;
-  z-index:50
-}
-.portrait-lock__content{
-  text-align:center;
-  color:#fff;
-  font-weight:900
-}
-.rotate-icon{
-  font-size:64px;
-  margin-bottom:12px;
-  animation:rotatePhone 1.4s infinite
-}
-@keyframes rotatePhone{
-  0%{transform:rotate(0)}
-  25%{transform:rotate(-20deg)}
-  50%{transform:rotate(0)}
-  75%{transform:rotate(20deg)}
-  100%{transform:rotate(0)}
-}
+    #titlePill{
+      max-width: 46vw;
+      white-space: nowrap;
+      overflow:hidden;
+      text-overflow: ellipsis;
+    }
 
-/* ===== 夜間（金魚之夜）樣式 ===== */
-body.fish-night{
-  --pool:#ffb347;
-  --hud:rgba(255,245,210,.78);
-}
-body.fish-night .card{border-radius:24px}
-body.fish-night .panel{
-  background:linear-gradient(180deg,#fff0c8,#ffd78c);
-  border-radius:30px
-}
-body.fish-night .panel h2{color:#6a3b00}
-</style>
+    #welcomePill{
+      flex:1;
+      justify-content:flex-start;
+      max-width: 48vw;
+      white-space: nowrap;
+      overflow:hidden;
+      text-overflow: ellipsis;
+      font-weight: 800;
+    }
+
+    #btnRestartTop{
+      pointer-events:auto;
+      border:none;
+      background:#fff;
+      border-radius: 18px;
+      padding: 10px 14px;
+      font-weight: 800;
+      box-shadow: 0 10px 30px rgba(0,0,0,.10);
+      cursor:pointer;
+    }
+
+    /* Player (阿鹿鹿) */
+    #player{
+      position:absolute;
+      bottom: 22px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 78px;
+      height: 78px;
+      border-radius: 20px;
+      background: rgba(255,255,255,.88);
+      box-shadow: 0 10px 30px rgba(0,0,0,.12);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size: 46px;
+      user-select:none;
+      -webkit-user-select:none;
+      z-index: 3;
+    }
+
+    /* Falling items */
+    .item{
+      position:absolute;
+      width: 54px;
+      height: 54px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size: 38px;
+      user-select:none;
+      -webkit-user-select:none;
+      filter: drop-shadow(0 10px 12px rgba(0,0,0,.12));
+      will-change: transform;
+      z-index: 2;
+    }
+
+    /* Ground */
+    #ground{
+      position:absolute;
+      bottom:0;
+      left:0;
+      right:0;
+      height: 18px;
+      background: rgba(0,0,0,.05);
+      z-index: 1;
+    }
+
+    /* GameOver overlay */
+    #gameover{
+      display:none;
+      position:absolute;
+      inset:0;
+      background: rgba(255,255,255,.82);
+      z-index: 999;
+      align-items:center;
+      justify-content:center;
+      padding: 18px;
+    }
+    #gameoverCard{
+      width:min(520px, 92vw);
+      background:#fff;
+      border-radius: 24px;
+      padding: 18px;
+      box-shadow: 0 18px 50px rgba(0,0,0,.16);
+      display:flex;
+      flex-direction:column;
+      gap: 10px;
+      text-align:center;
+    }
+    #gameoverTitle{
+      font-size: 28px;
+      font-weight: 900;
+    }
+    #finalScore{
+      font-size: 20px;
+      font-weight: 800;
+    }
+    .btn{
+      border:none;
+      border-radius: 18px;
+      padding: 12px 14px;
+      font-size: 16px;
+      font-weight: 900;
+      cursor:pointer;
+    }
+    .btn.primary{
+      background:#111;
+      color:#fff;
+    }
+    .btn.secondary{
+      background:#fff;
+      border:1px solid #ddd;
+      color:#111;
+    }
+    #shareHint{
+      font-size: 12px;
+      opacity: .75;
+      margin-top: 2px;
+      word-break: break-word;
+    }
+
+    /* Leaderboard */
+    #lb{
+      margin-top: 10px;
+      text-align:left;
+      background: #fafafa;
+      border-radius: 18px;
+      padding: 12px;
+      border: 1px solid #eee;
+    }
+    #lbTitle{
+      font-weight: 900;
+      margin-bottom: 8px;
+    }
+    .lbRow{
+      display:flex;
+      justify-content:space-between;
+      padding: 6px 8px;
+      border-radius: 12px;
+      background:#fff;
+      border:1px solid #f0f0f0;
+      margin-bottom: 6px;
+      font-weight: 700;
+      font-size: 14px;
+    }
+    .muted{
+      opacity:.7;
+      font-size:12px;
+      margin-top: 4px;
+      line-height: 1.35;
+    }
+
+    /* Volume panel (left side, vertical sliders) */
+    #volPanel{
+      position:absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 20;
+      pointer-events: auto;
+      user-select:none;
+      -webkit-user-select:none;
+    }
+    #volCard{
+      background: rgba(255,255,255,.88);
+      border: 1px solid rgba(0,0,0,.06);
+      box-shadow: 0 12px 34px rgba(0,0,0,.12);
+      border-radius: 18px;
+      padding: 10px 10px 12px;
+      width: 58px;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:10px;
+    }
+    .volTitle{
+      font-weight: 900;
+      font-size: 12px;
+      opacity: .85;
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+      letter-spacing: 1px;
+    }
+    .volGroup{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:8px;
+    }
+    .volLabel{
+      font-size: 12px;
+      font-weight: 900;
+    }
+    input[type="range"].vertical{
+      -webkit-appearance: slider-vertical;
+      writing-mode: bt-lr;
+      width: 22px;
+      height: 120px;
+      accent-color: #111;
+    }
+    #btnVolToggle{
+      border:none;
+      cursor:pointer;
+      background:#111;
+      color:#fff;
+      font-weight: 900;
+      border-radius: 14px;
+      padding: 8px 10px;
+      width: 58px;
+      box-shadow: 0 10px 22px rgba(0,0,0,.14);
+      margin-bottom: 8px;
+    }
+    .hide{
+      display:none !important;
+    }
+
+    /* Small helper to avoid accidental scrolling on iOS */
+    *{ -webkit-tap-highlight-color: transparent; }
+  </style>
 </head>
 
 <body>
-<div class="wrap">
-<div class="frame">
+  <div id="game">
+    <div id="hud">
+      <div class="pill" id="titlePill">🦒 阿鹿鹿接接樂</div>
 
-<div class="liffbar" id="liffBar" style="display:none">
-  <button onclick="liff.closeWindow()">關閉</button>
-</div>
+      <div class="pill" id="welcomePill">鹿粉你好～準備接接樂！</div>
 
-<canvas id="c" width="1280" height="720"></canvas>
+      <div class="pill small" id="scorePill">分數：<span id="score">0</span></div>
+      <div class="pill small" id="lifePill">命：<span id="lives">3</span> ❤️</div>
 
-<div class="hud">
-  <div class="card">分數：<b id="score">0</b></div>
-  <div class="card">時間：<b id="time">60</b>s</div>
-  <div class="card">稱號：<b id="title">新手鹿粉</b></div>
-</div>
+      <button id="btnRestartTop" title="重新開始">重新開始</button>
+    </div>
 
-<div class="toast" id="toast"></div>
+    <!-- Volume panel -->
+    <div id="volPanel" aria-label="volume panel">
+      <button id="btnVolToggle" title="顯示/收合音量">音量</button>
+      <div id="volCard">
+        <div class="volTitle">調整</div>
 
-<div class="overlay" id="overlay">
-  <div class="panel">
-    <h2>🌌 裂縫水池：鹿粉撈撈祭</h2>
-    <p>
-      ⚡ 裂縫暴走：12:00–14:00<br/>
-      🌙 金魚之夜：19:00–21:00
-    </p>
-    <button onclick="start()">開始遊戲</button>
+        <div class="volGroup">
+          <div class="volLabel">🫧</div>
+          <input id="sfxVol" class="vertical" type="range" min="0" max="100" value="35" />
+        </div>
+
+        <div class="volGroup">
+          <div class="volLabel">🎵</div>
+          <input id="bgmVol" class="vertical" type="range" min="0" max="100" value="28" />
+        </div>
+      </div>
+    </div>
+
+    <div id="player" aria-label="player">🦒</div>
+    <div id="ground"></div>
+
+    <!-- Game Over Overlay -->
+    <div id="gameover">
+      <div id="gameoverCard">
+        <div id="gameoverTitle">Game Over</div>
+        <div id="finalScore">分數：0</div>
+
+        <button class="btn primary" id="btnShare">分享成績到 LINE</button>
+        <button class="btn secondary" id="btnRestart">重新開始</button>
+        <div id="shareHint"></div>
+
+        <div id="lb">
+          <div id="lbTitle">🏆 排行榜（本機）</div>
+          <div id="lbList"></div>
+          <div class="muted">※ 目前為同裝置/同瀏覽器保存。要全體排行榜需後端（之後也可以再幫你加）。</div>
+        </div>
+      </div>
+    </div>
   </div>
-</div>
 
-<div id="portraitLock" class="portrait-lock">
-  <div class="portrait-lock__content">
-    <div class="rotate-icon">🔄</div>
-    🦒 請橫向遊玩
-  </div>
-</div>
+  <script>
+    /**********************
+     *  設定：填你的 LIFF ID
+     **********************/
+    const LIFF_ID = "2008825801-LXHTWx5N";
 
-</div>
-</div>
+    /**********************
+     *  遊戲狀態
+     **********************/
+    const game = document.getElementById("game");
+    const playerEl = document.getElementById("player");
+    const scoreEl = document.getElementById("score");
+    const livesEl = document.getElementById("lives");
+    const welcomePill = document.getElementById("welcomePill");
 
-<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-<script>
-/* ===== 改成你的 LIFF ID ===== */
-const LIFF_ID = "2008825801-LXHTWx5N";
+    const btnRestartTop = document.getElementById("btnRestartTop");
+    const gameoverEl = document.getElementById("gameover");
+    const finalScoreEl = document.getElementById("finalScore");
+    const btnRestart = document.getElementById("btnRestart");
+    const btnShare = document.getElementById("btnShare");
+    const shareHint = document.getElementById("shareHint");
 
-/* ===== LIFF ===== */
-(async()=>{
- try{
-  await liff.init({liffId:LIFF_ID});
-  if(liff.isInClient()) document.getElementById("liffBar").style.display="block";
- }catch(e){}
-})();
+    const volCard = document.getElementById("volCard");
+    const btnVolToggle = document.getElementById("btnVolToggle");
+    const sfxVolEl = document.getElementById("sfxVol");
+    const bgmVolEl = document.getElementById("bgmVol");
 
-/* ===== 時段設定 ===== */
-const FRENZY_START_H=12, FRENZY_END_H=14;
-const FISH_START_H=19, FISH_END_H=21;
+    let W = window.innerWidth;
+    let H = window.innerHeight;
 
-function isFrenzy(d){const h=d.getHours();return h>=FRENZY_START_H&&h<FRENZY_END_H}
-function isFishNight(d){const h=d.getHours();return h>=FISH_START_H&&h<FISH_END_H}
+    let playerX = W * 0.5;
+    const playerW = 78;
+    const playerH = 78;
+    const itemW = 54;
+    const itemH = 54;
 
-/* ===== 音效 ===== */
-let actx=null,audioOn=true,nightBgm=null;
-function beep(f=440,d=0.05){
- if(!audioOn)return;
- if(!actx)actx=new AudioContext();
- const o=actx.createOscillator(),g=actx.createGain();
- o.frequency.value=f;g.gain.value=0.04;
- o.connect(g);g.connect(actx.destination);
- o.start();o.stop(actx.currentTime+d)
-}
-function nightBell(){
- if(!audioOn)return;
- if(!actx)actx=new AudioContext();
- const o=actx.createOscillator(),g=actx.createGain();
- o.frequency.value=880;g.gain.value=0.03;
- o.connect(g);g.connect(actx.destination);
- o.start();o.stop(actx.currentTime+0.6)
-}
-function startNightBgm(){
- if(nightBgm||!audioOn)return;
- if(!actx)actx=new AudioContext();
- const o=actx.createOscillator(),g=actx.createGain();
- o.frequency.value=110;g.gain.value=0.008;
- o.connect(g);g.connect(actx.destination);
- o.start();nightBgm={o,g}
-}
-function stopNightBgm(){
- if(nightBgm){nightBgm.o.stop();nightBgm=null}
-}
+    let score = 0;
+    let lives = 3;
 
-/* ===== 遊戲狀態 ===== */
-const c=document.getElementById("c"),ctx=c.getContext("2d");
-let score=0,time=60,running=false;
-let lastFish=false;
+    let running = true;
+    let lastT = performance.now();
+    let lastSpawn = 0;
 
-function toast(t){
- const el=document.getElementById("toast");
- el.textContent=t;el.classList.add("show");
- setTimeout(()=>el.classList.remove("show"),2500)
-}
-function titleFromScore(s){
- if(s>60)return"熟練鹿粉";
- if(s>30)return"見習鹿粉";
- return"新手鹿粉"
-}
-function displayTitle(){
- const base=titleFromScore(score);
- return document.body.classList.contains("fish-night")
-  ? `夜間觀測員 · ${base}` : base
-}
+    let spawnInterval = 900; // ms, gets faster
+    let speedBase = 220;     // px/sec, gets faster
+    const items = [];
 
-/* ===== 方向鎖定 ===== */
-const lock=document.getElementById("portraitLock");
-function isPortrait(){return innerHeight>innerWidth}
-function updateOrientation(){
- lock.style.display=isPortrait()?"grid":"none"
-}
-window.addEventListener("resize",updateOrientation);
-updateOrientation();
+    let playerName = "鹿粉";
+    let inLiff = false;
 
-/* ===== 主流程 ===== */
-function start(){
- if(isPortrait()){toast("🦒 請先橫向");return}
- document.getElementById("overlay").style.display="none";
- score=0;time=60;running=true
-}
-function loop(){
- ctx.clearRect(0,0,1280,720);
- const now=new Date();
+    // Combo for pitch up (good catches)
+    let combo = 0;
 
- if(isFishNight(now)){
-  document.body.classList.add("fish-night");
-  if(!lastFish){nightBell();startNightBgm();toast("🌙 鹿鹿低聲說：夜間系統已接管。")}
-  lastFish=true
- }else{
-  document.body.classList.remove("fish-night");
-  if(lastFish)stopNightBgm();
-  lastFish=false
- }
+    /**********************
+     *  工具：隨機
+     **********************/
+    function rand(min, max){ return Math.random() * (max - min) + min; }
+    function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
 
- if(running){
-  score+=isFrenzy(now)?2:1;
-  time-=0.016;
-  if(time<=0){
-    running=false;
-    document.getElementById("overlay").style.display="grid";
-  }
- }
+    /**********************
+     *  WebAudio：音效 & BGM（柔和、輕快）
+     **********************/
+    const AudioSys = (() => {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
 
- ctx.fillStyle=document.body.classList.contains("fish-night")
-  ?"rgba(255,215,120,.8)":"rgba(255,255,255,.8)";
- ctx.beginPath();
- ctx.arc(Math.random()*1280,Math.random()*720,6,0,Math.PI*2);
- ctx.fill();
+      const master = ctx.createGain();
+      master.gain.value = 1.0;
+      master.connect(ctx.destination);
 
- document.getElementById("score").textContent=score;
- document.getElementById("time").textContent=Math.ceil(time);
- document.getElementById("title").textContent=displayTitle();
+      const sfx = ctx.createGain();
+      const bgm = ctx.createGain();
+      sfx.connect(master);
+      bgm.connect(master);
 
- requestAnimationFrame(loop)
-}
-loop();
-</script>
+      // gentle limiting to avoid harshness
+      const comp = ctx.createDynamicsCompressor();
+      comp.threshold.value = -18;
+      comp.knee.value = 18;
+      comp.ratio.value = 3;
+      comp.attack.value = 0.008;
+      comp.release.value = 0.12;
+      master.disconnect();
+      master.connect(comp);
+      comp.connect(ctx.destination);
+
+      // default volumes (can be changed by sliders)
+      let sfxVol = 0.35;
+      let bgmVol = 0.28;
+      sfx.gain.value = sfxVol;
+      bgm.gain.value = bgmVol;
+
+      function setSfxVol(v){
+        sfxVol = clamp(v, 0, 1);
+        sfx.gain.value = sfxVol;
+      }
+      function setBgmVol(v){
+        bgmVol = clamp(v, 0, 1);
+        bgm.gain.value = bgmVol;
+      }
+
+      // bubble pop: two quick sine blips + tiny noise "po"
+      function playBubblePop(pitchFactor = 1){
+        const now = ctx.currentTime;
+
+        // main blip
+        const o1 = ctx.createOscillator();
+        const g1 = ctx.createGain();
+        o1.type = "sine";
+        const base = 520 * pitchFactor;
+        o1.frequency.setValueAtTime(base, now);
+        o1.frequency.exponentialRampToValueAtTime(base * 1.35, now + 0.05);
+        g1.gain.setValueAtTime(0.001, now);
+        g1.gain.exponentialRampToValueAtTime(0.22, now + 0.01);
+        g1.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+
+        o1.connect(g1);
+        g1.connect(sfx);
+
+        // secondary blip (rounder Q 彈感)
+        const o2 = ctx.createOscillator();
+        const g2 = ctx.createGain();
+        o2.type = "triangle";
+        o2.frequency.setValueAtTime(base * 0.66, now);
+        o2.frequency.exponentialRampToValueAtTime(base * 0.9, now + 0.05);
+        g2.gain.setValueAtTime(0.001, now);
+        g2.gain.exponentialRampToValueAtTime(0.14, now + 0.012);
+        g2.gain.exponentialRampToValueAtTime(0.001, now + 0.10);
+
+        o2.connect(g2);
+        g2.connect(sfx);
+
+        // tiny noise "po"
+        const noiseBuf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.06), ctx.sampleRate);
+        const data = noiseBuf.getChannelData(0);
+        for(let i=0;i<data.length;i++){
+          data[i] = (Math.random()*2-1) * (1 - i/data.length);
+        }
+        const noise = ctx.createBufferSource();
+        noise.buffer = noiseBuf;
+        const nf = ctx.createBiquadFilter();
+        nf.type = "highpass";
+        nf.frequency.value = 850;
+        const ng = ctx.createGain();
+        ng.gain.setValueAtTime(0.001, now);
+        ng.gain.exponentialRampToValueAtTime(0.10, now + 0.01);
+        ng.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+
+        noise.connect(nf);
+        nf.connect(ng);
+        ng.connect(sfx);
+
+        o1.start(now); o1.stop(now + 0.11);
+        o2.start(now); o2.stop(now + 0.12);
+        noise.start(now); noise.stop(now + 0.065);
+      }
+
+      function playHitBad(){
+        const now = ctx.currentTime;
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = "square";
+        o.frequency.setValueAtTime(180, now);
+        o.frequency.exponentialRampToValueAtTime(110, now + 0.12);
+        g.gain.setValueAtTime(0.001, now);
+        g.gain.exponentialRampToValueAtTime(0.18, now + 0.01);
+        g.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
+        o.connect(g); g.connect(sfx);
+        o.start(now); o.stop(now + 0.18);
+      }
+
+      // Soft upbeat BGM: simple arpeggio + pad (very light)
+      let bgmTimer = null;
+      let bgmNodes = [];
+      const scale = [0, 2, 4, 7, 9]; // major pentatonic
+      let step = 0;
+
+      function startBgm(){
+        if(bgmTimer) return;
+        const tempo = 108; // relaxed upbeat
+        const beat = 60 / tempo; // seconds per quarter
+        const tick = beat / 2; // eighth notes
+
+        // gentle pad drone
+        const pad = ctx.createOscillator();
+        const pad2 = ctx.createOscillator();
+        const padG = ctx.createGain();
+        const padF = ctx.createBiquadFilter();
+        pad.type = "sine";
+        pad2.type = "sine";
+        pad.frequency.value = 220;
+        pad2.frequency.value = 220 * 2;
+        padG.gain.value = 0.05;
+        padF.type = "lowpass";
+        padF.frequency.value = 1200;
+        pad.connect(padG);
+        pad2.connect(padG);
+        padG.connect(padF);
+        padF.connect(bgm);
+
+        pad.start();
+        pad2.start();
+        bgmNodes.push({pad, pad2, padG, padF});
+
+        bgmTimer = setInterval(() => {
+          const now = ctx.currentTime;
+          // arpeggio note
+          const root = 261.63; // C4
+          const octave = (step % 16 < 8) ? 0 : 12;
+          const deg = scale[step % scale.length] + octave;
+          const freq = root * Math.pow(2, deg/12);
+
+          const o = ctx.createOscillator();
+          const g = ctx.createGain();
+          const f = ctx.createBiquadFilter();
+
+          o.type = "triangle";
+          o.frequency.setValueAtTime(freq, now);
+
+          f.type = "lowpass";
+          f.frequency.setValueAtTime(1500, now);
+
+          g.gain.setValueAtTime(0.0001, now);
+          g.gain.exponentialRampToValueAtTime(0.09, now + 0.02);
+          g.gain.exponentialRampToValueAtTime(0.0001, now + tick * 0.9);
+
+          o.connect(f);
+          f.connect(g);
+          g.connect(bgm);
+
+          o.start(now);
+          o.stop(now + tick);
+
+          step++;
+        }, Math.floor(tick * 1000));
+      }
+
+      function stopBgm(){
+        if(bgmTimer){
+          clearInterval(bgmTimer);
+          bgmTimer = null;
+        }
+        // stop pad nodes
+        bgmNodes.forEach(n => {
+          try{ n.pad.stop(); }catch(e){}
+          try{ n.pad2.stop(); }catch(e){}
+        });
+        bgmNodes = [];
+      }
+
+      function resume(){
+        if(ctx.state !== "running"){
+          ctx.resume().catch(()=>{});
+        }
+      }
+
+      return { ctx, resume, setSfxVol, setBgmVol, playBubblePop, playHitBad, startBgm, stopBgm };
+    })();
+
+    // sliders -> audio volumes (persist)
+    const VOL_KEY = "alulu_vol_v1";
+    function loadVol(){
+      try{
+        const raw = localStorage.getItem(VOL_KEY);
+        if(!raw) return null;
+        return JSON.parse(raw);
+      }catch(e){
+        return null;
+      }
+    }
+    function saveVol(sfx, bgm){
+      localStorage.setItem(VOL_KEY, JSON.stringify({ sfx, bgm }));
+    }
+
+    function applyVolFromUI(){
+      const sfx = clamp(Number(sfxVolEl.value)/100, 0, 1);
+      const bgm = clamp(Number(bgmVolEl.value)/100, 0, 1);
+      AudioSys.setSfxVol(sfx);
+      AudioSys.setBgmVol(bgm);
+      saveVol(sfxVolEl.value, bgmVolEl.value);
+    }
+
+    const savedVol = loadVol();
+    if(savedVol){
+      if(typeof savedVol.sfx !== "undefined") sfxVolEl.value = String(savedVol.sfx);
+      if(typeof savedVol.bgm !== "undefined") bgmVolEl.value = String(savedVol.bgm);
+    }
+    applyVolFromUI();
+
+    sfxVolEl.addEventListener("input", applyVolFromUI);
+    bgmVolEl.addEventListener("input", applyVolFromUI);
+
+    btnVolToggle.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      volCard.classList.toggle("hide");
+    });
+
+    /**********************
+     *  物品：好物(💎) + 壞物(🍎)
+     **********************/
+    function spawnItem(){
+      const el = document.createElement("div");
+      el.className = "item";
+
+      const good = Math.random() < 0.55;
+      el.textContent = good ? "💎" : "🍎";
+
+      const x = rand(12, W - itemW - 12);
+      const y = -70;
+
+      el.style.transform = `translate(${x}px, ${y}px)`;
+      game.appendChild(el);
+
+      const speed = speedBase + rand(-30, 90);
+      items.push({ el, x, y, speed, good });
+    }
+
+    /**********************
+     *  碰撞
+     **********************/
+    function intersects(ax, ay, aw, ah, bx, by, bw, bh){
+      return ax < bx + bw && ax + aw > bx && ay < by + bh && ay + ah > by;
+    }
+
+    /**********************
+     *  HUD 更新
+     **********************/
+    function updateHUD(){
+      scoreEl.textContent = String(score);
+      livesEl.textContent = String(lives);
+    }
+
+    /**********************
+     *  排行榜：本機 localStorage
+     **********************/
+    const LB_KEY = "alulu_catch_lb_v1";
+
+    function loadLeaderboard(){
+      try{
+        const raw = localStorage.getItem(LB_KEY);
+        return raw ? JSON.parse(raw) : [];
+      }catch(e){
+        return [];
+      }
+    }
+    function saveLeaderboard(list){
+      localStorage.setItem(LB_KEY, JSON.stringify(list));
+    }
+    function addToLeaderboard(name, score){
+      const list = loadLeaderboard();
+      list.push({ name, score, ts: Date.now() });
+      list.sort((a,b)=> b.score - a.score);
+      const top = list.slice(0, 10);
+      saveLeaderboard(top);
+      return top;
+    }
+    function renderLeaderboard(list){
+      const box = document.getElementById("lbList");
+      box.innerHTML = "";
+      if(!list.length){
+        box.innerHTML = `<div class="muted">還沒有紀錄，快當第一名！</div>`;
+        return;
+      }
+      list.forEach((r, i)=>{
+        const row = document.createElement("div");
+        row.className = "lbRow";
+        row.innerHTML = `<div>${i+1}. ${escapeHtml(r.name || "鹿粉")}</div><div>${r.score}</div>`;
+        box.appendChild(row);
+      });
+    }
+    function escapeHtml(s){
+      return String(s).replace(/[&<>"']/g, m => ({
+        "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"
+      }[m]));
+    }
+
+    /**********************
+     *  LIFF 初始化（抓名字）
+     **********************/
+    async function initLIFF(){
+      try{
+        await liff.init({ liffId: LIFF_ID });
+        inLiff = !!liff.isInClient && liff.isInClient();
+
+        // 需要 scope: profile + openid（若你有設定）
+        if (liff.isLoggedIn && !liff.isLoggedIn()) {
+          // 在外部瀏覽器會跳登入；在 LINE 內通常已登入
+          liff.login();
+          return;
+        }
+
+        try{
+          const profile = await liff.getProfile();
+          if(profile && profile.displayName){
+            playerName = profile.displayName;
+            welcomePill.textContent = `鹿粉 ${playerName}～準備接接樂！`;
+          }
+        }catch(e){
+          welcomePill.textContent = "鹿粉你好～準備接接樂！";
+        }
+      }catch(e){
+        inLiff = false;
+        welcomePill.textContent = "鹿粉你好～準備接接樂！";
+      }
+    }
+
+    /**********************
+     *  分享成績（LINE 內：sendMessages）
+     *  需要 scope: chat_message.write
+     **********************/
+    async function shareScoreToLINE(score){
+      const text = `🦒 阿鹿鹿接接樂\n鹿粉 ${playerName} 的成績：${score} 分！\n你也來挑戰看看～`;
+      shareHint.textContent = "";
+
+      try{
+        if(window.liff && liff.isInClient && liff.isInClient() && liff.sendMessages){
+          await liff.sendMessages([{ type:"text", text }]);
+          shareHint.textContent = "✅ 已送出到聊天室！";
+          return;
+        }
+      }catch(e){
+        // fall through
+      }
+
+      // fallback: copy to clipboard
+      try{
+        await navigator.clipboard.writeText(text);
+        shareHint.textContent = "📋 已複製分享文字（可貼到 LINE）";
+      }catch(e){
+        shareHint.textContent = text; // show the text as last resort
+      }
+    }
+
+    /**********************
+     *  玩家移動（滑鼠/觸控）
+     **********************/
+    function setPlayerX(x){
+      playerX = clamp(x, playerW/2 + 8, W - playerW/2 - 8);
+      playerEl.style.left = playerX + "px";
+    }
+
+    // Pointer move within game
+    function onPointerMove(e){
+      if(!running) return;
+      const x = e.clientX;
+      setPlayerX(x);
+    }
+
+    // also allow drag / touch
+    game.addEventListener("pointerdown", (e)=>{
+      AudioSys.resume();
+      AudioSys.startBgm();
+      onPointerMove(e);
+    }, {passive:true});
+
+    game.addEventListener("pointermove", onPointerMove, {passive:true});
+
+    // keyboard (desktop)
+    const keys = { left:false, right:false };
+    window.addEventListener("keydown", (e)=>{
+      if(e.key === "ArrowLeft") keys.left = true;
+      if(e.key === "ArrowRight") keys.right = true;
+      if(e.key === " "){
+        AudioSys.resume();
+        AudioSys.startBgm();
+      }
+    });
+    window.addEventListener("keyup", (e)=>{
+      if(e.key === "ArrowLeft") keys.left = false;
+      if(e.key === "ArrowRight") keys.right = false;
+    });
+
+    /**********************
+     *  遊戲流程
+     **********************/
+    function resetGame(){
+      // clear items
+      items.forEach(it => { try{ it.el.remove(); }catch(e){} });
+      items.length = 0;
+
+      score = 0;
+      lives = 3;
+      combo = 0;
+
+      running = true;
+      lastSpawn = 0;
+      spawnInterval = 900;
+      speedBase = 220;
+
+      updateHUD();
+      gameoverEl.style.display = "none";
+      shareHint.textContent = "";
+
+      setPlayerX(W * 0.5);
+
+      // start audio on first interaction; here we don't force resume
+    }
+
+    function gameOver(){
+      running = false;
+      finalScoreEl.textContent = `分數：${score}`;
+
+      // leaderboard
+      const top = addToLeaderboard(playerName, score);
+      renderLeaderboard(top);
+
+      gameoverEl.style.display = "flex";
+    }
+
+    function adjustDifficulty(){
+      // gradually faster
+      const s = score;
+      spawnInterval = clamp(900 - s * 6, 340, 900);
+      speedBase = clamp(220 + s * 3, 220, 520);
+    }
+
+    function tick(t){
+      const dt = (t - lastT) / 1000;
+      lastT = t;
+
+      // keyboard movement
+      if(running){
+        let dx = 0;
+        if(keys.left) dx -= 520 * dt;
+        if(keys.right) dx += 520 * dt;
+        if(dx !== 0) setPlayerX(playerX + dx);
+      }
+
+      if(running){
+        // spawn
+        lastSpawn += dt * 1000;
+        if(lastSpawn >= spawnInterval){
+          lastSpawn = 0;
+          spawnItem();
+          adjustDifficulty();
+        }
+
+        // player rect
+        const px = playerX - playerW/2;
+        const py = H - 22 - playerH;
+
+        // update items
+        for(let i = items.length - 1; i >= 0; i--){
+          const it = items[i];
+          it.y += it.speed * dt;
+
+          // fall
+          it.el.style.transform = `translate(${it.x}px, ${it.y}px)`;
+
+          // collision
+          if(intersects(px, py, playerW, playerH, it.x, it.y, itemW, itemH)){
+            // remove
+            try{ it.el.remove(); }catch(e){}
+            items.splice(i, 1);
+
+            if(it.good){
+              score += 1;
+              combo += 1;
+
+              // pitch up with combo (cap) and keep not too sharp
+              const pf = 1 + Math.min(combo, 18) * 0.03;
+              AudioSys.resume();
+              AudioSys.playBubblePop(pf);
+
+            }else{
+              lives -= 1;
+              combo = 0;
+              AudioSys.resume();
+              AudioSys.playHitBad();
+              if(lives <= 0){
+                updateHUD();
+                gameOver();
+                break;
+              }
+            }
+            updateHUD();
+            continue;
+          }
+
+          // missed (hit ground)
+          if(it.y > H - 18){
+            try{ it.el.remove(); }catch(e){}
+            items.splice(i, 1);
+
+            if(it.good){
+              // miss good -> lose life + reset combo
+              lives -= 1;
+              combo = 0;
+              AudioSys.resume();
+              AudioSys.playHitBad();
+              updateHUD();
+              if(lives <= 0){
+                gameOver();
+                break;
+              }
+            }else{
+              // miss bad -> reward a tiny bit
+              score += 1;
+              combo = Math.max(0, combo - 1);
+              AudioSys.resume();
+              // small soft pop (lower pitch)
+              AudioSys.playBubblePop(0.92);
+              updateHUD();
+            }
+          }
+        }
+      }
+
+      requestAnimationFrame(tick);
+    }
+
+    /**********************
+     *  視窗大小變更
+     **********************/
+    function onResize(){
+      W = window.innerWidth;
+      H = window.innerHeight;
+      setPlayerX(playerX);
+    }
+    window.addEventListener("resize", onResize);
+
+    /**********************
+     *  綁定按鈕
+     **********************/
+    btnRestartTop.addEventListener("click", ()=>{
+      AudioSys.resume();
+      AudioSys.startBgm();
+      resetGame();
+    });
+
+    btnRestart.addEventListener("click", ()=>{
+      AudioSys.resume();
+      AudioSys.startBgm();
+      resetGame();
+    });
+
+    btnShare.addEventListener("click", async ()=>{
+      AudioSys.resume();
+      await shareScoreToLINE(score);
+    });
+
+    /**********************
+     *  初始
+     **********************/
+    (async function boot(){
+      // initial player position
+      setPlayerX(playerX);
+
+      // load lb
+      renderLeaderboard(loadLeaderboard());
+
+      // init liff (name + share ability)
+      initLIFF();
+
+      // start loop
+      requestAnimationFrame((t)=>{
+        lastT = t;
+        requestAnimationFrame(tick);
+      });
+
+      // start BGM only after first user interaction (browser policy)
+      // We'll also resume/start on pointerdown and restart buttons.
+    })();
+  </script>
 </body>
 </html>
