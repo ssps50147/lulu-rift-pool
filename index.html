@@ -597,7 +597,7 @@
       ensureAudio();
 
       const master = actx.createGain();
-      master.gain.value = 0.0078; // ✅ 輕鬆但不吵
+      master.gain.value = 0.0135; // ✅ 輕鬆但不吵
       master.connect(actx.destination);
 
       const lp = actx.createBiquadFilter();
@@ -621,7 +621,7 @@
       ];
       const scale = [60, 62, 64, 67, 69, 72]; // C D E G A C
 
-      const bpm = 108;
+      const bpm = 120;
       const stepSec = 60 / bpm / 2;
       let step = 0;
 
@@ -696,7 +696,7 @@
           pan
         });
 
-        if(step % 4 === 2 && Math.random() < 0.65){
+        if(step % 4 === 2 && Math.random() < 0.82){
           const s = scale[(Math.random() * scale.length) | 0];
           const jump = (Math.random() < 0.18) ? 12 : 0;
           pluck({
