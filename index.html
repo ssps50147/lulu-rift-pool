@@ -218,8 +218,7 @@
     }
   </style>
 
-  <!-- ✅ LIFF 支援（只需改一行 LIFF_ID）
-       如果你不是在 LIFF 環境，這段會自動降級，不影響一般瀏覽器執行。 -->
+  <!-- ✅ LIFF 支援（只需改一行 LIFF_ID） -->
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
 <body>
@@ -256,8 +255,6 @@
           <li>⏱️ 只有 <b>60 秒</b>，節奏要快但別亂：<b>撈到才算</b>。</li>
           <li>🧩 碎片：基礎得分；🐟 金魚：較高得分；🌙 金色金魚：夜間特別分數。</li>
           <li>🔥 連擊：連續成功撈起會提高連擊；若一趟空網就會斷連擊。</li>
-          <li>🫧 點擊音效是泡泡啵啵，連擊越高音高越高（已做不吵的音量控制）。</li>
-          <li>🎵 環境 BGM 為程式生成的輕快休閒輕音樂（免外部音檔）。</li>
         </ul>
         <p class="muted">小提示：開啟音量遊玩會更有趣 ✨</p>
       </div>
@@ -340,13 +337,9 @@
       if(!window.liff || !LIFF_ID || LIFF_ID.includes("YOUR_LIFF_ID")) return;
       await window.liff.init({ liffId: LIFF_ID });
       if(window.liff.isLoggedIn()){
-        try{
-          liffProfile = await window.liff.getProfile();
-        }catch(e){}
+        try{ liffProfile = await window.liff.getProfile(); }catch(e){}
       }
-    }catch(e){
-      // fallback silently
-    }
+    }catch(e){}
   }
   initLIFF();
 
@@ -355,7 +348,6 @@
    **********************/
   const $ = (id) => document.getElementById(id);
   const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
-  const lerp = (a,b,t)=>a+(b-a)*t;
 
   function todayKey(){
     const d = new Date();
@@ -366,12 +358,9 @@
   }
 
   function nowEvent(){
-    // Browser local time (使用者在台灣通常即為 Asia/Taipei)
     const d = new Date();
     const h = d.getHours();
-    // 6. 裂縫暴走：12:00–14:00（密度↑、倍率↑）
     const frenzy = (h >= 12 && h < 14);
-    // 7. 金魚之夜：19:00–21:00（金色主題、🌙 標記、夜間稱號）
     const night = (h >= 19 && h < 21);
     return { frenzy, night, hour: h };
   }
@@ -383,7 +372,6 @@
   let sfxEnabled = true;
   let bgmEnabled = true;
 
-  // master gains (keep "not noisy")
   let sfxGainNode = null;
   let bgmGainNode = null;
 
@@ -395,27 +383,24 @@
     sfxGainNode = audioCtx.createGain();
     bgmGainNode = audioCtx.createGain();
 
-    // conservative volumes
+    // ✅ 降低 BGM 音量（原本 0.08 -> 0.045）
     sfxGainNode.gain.value = 0.18;
-    bgmGainNode.gain.value = 0.08;
+    bgmGainNode.gain.value = 0.045;
 
     sfxGainNode.connect(audioCtx.destination);
     bgmGainNode.connect(audioCtx.destination);
   }
 
-  // 9. 泡泡啵啵（連擊越高音高越高，不吵）
   function playBubble(comboLevel){
     if(!sfxEnabled) return;
     ensureAudio();
     const t0 = audioCtx.currentTime;
 
-    // pitch rises gently with combo (capped)
     const c = clamp(comboLevel, 0, 40);
-    const base = 220 + c * 12; // not too sharp
+    const base = 220 + c * 12;
     const f1 = base * (1.0 + Math.random()*0.04);
     const f2 = base * 1.65;
 
-    // "plop" = quick sine + filtered noise burst
     const o1 = audioCtx.createOscillator();
     const o2 = audioCtx.createOscillator();
     const g = audioCtx.createGain();
@@ -430,12 +415,10 @@
     lp.frequency.setValueAtTime(1400, t0);
     lp.Q.value = 0.9;
 
-    // Envelope (very short, soft)
     g.gain.setValueAtTime(0.0001, t0);
     g.gain.exponentialRampToValueAtTime(0.55, t0 + 0.012);
     g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.12);
 
-    // Slight pitch dip = bubble feel
     o1.frequency.exponentialRampToValueAtTime(f1 * 0.75, t0 + 0.09);
     o2.frequency.exponentialRampToValueAtTime(f2 * 0.80, t0 + 0.10);
 
@@ -450,7 +433,6 @@
     o2.stop(t0 + 0.14);
   }
 
-  // 10. 程式生成輕快休閒輕音樂 BGM（免外部音檔）
   let bgmTimer = null;
   let bgmNodes = [];
   let bgmStep = 0;
@@ -467,23 +449,20 @@
   function startBGM(){
     if(!bgmEnabled) return;
     ensureAudio();
-
-    // if already running, keep it
     if(bgmTimer) return;
 
-    // simple chord progression (major-ish), plus plucky melody
     const bpm = 122;
-    const stepMs = (60_000 / bpm) / 2; // 1/8 notes
+    const stepMs = (60_000 / bpm) / 2;
+
     const prog = [
-      { root: 0,  type: "maj" }, // I
-      { root: 5,  type: "maj" }, // IV
-      { root: 7,  type: "maj" }, // V
-      { root: 9,  type: "min" }, // vi
+      { root: 0,  type: "maj" },
+      { root: 5,  type: "maj" },
+      { root: 7,  type: "maj" },
+      { root: 9,  type: "min" },
     ];
-    const scale = [0,2,4,7,9,12,14,16]; // pentatonic-ish with octave
+    const scale = [0,2,4,7,9,12,14,16];
 
     function midiToHz(m){ return 440 * Math.pow(2, (m-69)/12); }
-
     function chordTones(rootMidi, type){
       const triad = (type==="min") ? [0,3,7] : [0,4,7];
       return triad.map(x=>rootMidi+x);
@@ -540,24 +519,19 @@
     }
 
     bgmTimer = setInterval(() => {
-      if(!audioCtx) return;
-
       const t = audioCtx.currentTime;
-      const bar = Math.floor(bgmStep / 16); // 16 steps per bar
+      const bar = Math.floor(bgmStep / 16);
       const p = prog[bar % prog.length];
 
-      // base key: C major around middle
       const rootMidi = 60 + p.root;
       const tones = chordTones(rootMidi, p.type);
 
-      // soft pad on downbeats
       if(bgmStep % 8 === 0){
         for(const m of tones){
           pad(midiToHz(m - 12), 0.62, t);
         }
       }
 
-      // plucky melody: probabilistic
       const should = (bgmStep % 2 === 0) && Math.random() < 0.82;
       if(should){
         const pick = scale[(bgmStep/2 + (Math.random()<0.25?1:0)) % scale.length | 0];
@@ -565,11 +539,8 @@
         pluck(midiToHz(note), 0.14 + Math.random()*0.06, t);
       }
 
-      bgmStep = (bgmStep + 1) % 64; // 4 bars loop
-      // cleanup old nodes occasionally
-      if(bgmNodes.length > 200){
-        bgmNodes.splice(0, 120);
-      }
+      bgmStep = (bgmStep + 1) % 64;
+      if(bgmNodes.length > 200) bgmNodes.splice(0, 120);
     }, stepMs);
   }
 
@@ -577,7 +548,8 @@
     $("btnMute").textContent = sfxEnabled ? "🔈 音效：開" : "🔇 音效：關";
     $("btnBgm").textContent  = bgmEnabled ? "🎵 BGM：開" : "🎵 BGM：關";
     if(audioCtx && sfxGainNode) sfxGainNode.gain.value = sfxEnabled ? 0.18 : 0.0001;
-    if(audioCtx && bgmGainNode) bgmGainNode.gain.value = bgmEnabled ? 0.08 : 0.0001;
+    // ✅ 降低 BGM 音量（維持 0.045）
+    if(audioCtx && bgmGainNode) bgmGainNode.gain.value = bgmEnabled ? 0.045 : 0.0001;
 
     if(bgmEnabled) startBGM(); else stopBGM();
   }
@@ -600,18 +572,14 @@
   window.addEventListener("resize", resize);
   resize();
 
-  // Orientation lock (2. 強制橫向)
   function isLandscape(){
     return window.innerWidth >= window.innerHeight;
   }
   function updateRotateLock(){
     const locked = !isLandscape();
     $("rotateLock").style.display = locked ? "flex" : "none";
-    // If locked, prevent starting / auto pause
     if(locked){
-      if(state.phase === "playing"){
-        state.phase = "paused_by_rotate";
-      }
+      if(state.phase === "playing") state.phase = "paused_by_rotate";
     }else{
       if(state.phase === "paused_by_rotate"){
         state.phase = "playing";
@@ -623,7 +591,7 @@
   window.addEventListener("orientationchange", updateRotateLock);
 
   const state = {
-    phase: "boot", // boot, tutorial, ready, playing, ended, paused_by_rotate
+    phase: "boot",
     tLeft: 60.0,
     score: 0,
     combo: 0,
@@ -634,28 +602,12 @@
     modeTag: "DAY",
     event: nowEvent(),
     lastTs: 0,
-    rng: Math.random,
-    // net control
     pointerDown: false,
     pointerX: 0,
-    net: {
-      x: 0,
-      y: 0,
-      targetY: 0,
-      phase: "idle", // idle, down, up
-      radius: 48,
-      speed: 920, // px/s
-      depth: 0.70, // fraction of pool height
-      caughtThisRun: 0,
-    },
-    // pool
-    pool: {
-      x: 0, y: 0, w: 0, h: 0,
-    },
-    // objects
+    net: { x:0, y:0, targetY:0, phase:"idle", radius:48, speed:920, depth:0.70, caughtThisRun:0 },
+    pool: { x:0, y:0, w:0, h:0 },
     items: [],
     spawnAcc: 0,
-    // fx
     ripples: [],
     particles: [],
   };
@@ -680,7 +632,6 @@
     $("eventBadge").textContent = `${state.modeIcon} ${state.modeName}`;
     $("eventSub").textContent = "60 秒撈取挑戰｜按住下網撈碎片／金魚得分";
 
-    // theme hint
     if(state.event.night){
       document.documentElement.style.setProperty("--accent", "#ffd36a");
     }else{
@@ -689,7 +640,6 @@
   }
 
   function poolLayout(){
-    // pool area within screen (safe margins for HUD)
     const pad = 14;
     const topHud = 74;
     const bottomHud = 74;
@@ -699,13 +649,11 @@
     const h = H - (pad + topHud) - (pad + bottomHud);
     state.pool = { x, y, w, h };
 
-    // net initial
     state.net.x = x + w/2;
     state.net.y = y + 14;
     state.net.targetY = y + h * state.net.depth;
     state.net.radius = clamp(w * 0.035, 34, 62);
   }
-
   poolLayout();
   window.addEventListener("resize", poolLayout);
 
@@ -727,15 +675,11 @@
   }
 
   function startGame(){
-    if(!isLandscape()){
-      updateRotateLock();
-      return;
-    }
+    if(!isLandscape()){ updateRotateLock(); return; }
     ensureAudio();
-    if(audioCtx.state === "suspended"){
-      audioCtx.resume().catch(()=>{});
-    }
+    if(audioCtx.state === "suspended"){ audioCtx.resume().catch(()=>{}); }
     setModeUI();
+
     state.phase = "playing";
     state.tLeft = 60.0;
     state.score = 0;
@@ -756,7 +700,6 @@
 
   function endGame(){
     state.phase = "ended";
-    // save leaderboard (today only)
     const info = getPlayerInfo();
     saveScoreToday({
       name: info.name,
@@ -774,15 +717,12 @@
     $("score").textContent = Math.floor(state.score);
     $("combo").textContent = state.combo;
     $("mult").textContent = state.mult.toFixed(1);
-    $("multChip").style.display = (state.mult > 1.01) ? "inline-flex" : "inline-flex";
   }
 
   /**********************
-   * Leaderboard (today only)
+   * Leaderboard
    **********************/
-  function lbStorageKey(){
-    return `rr_leaderboard_${todayKey()}`;
-  }
+  function lbStorageKey(){ return `rr_leaderboard_${todayKey()}`; }
 
   function loadTodayLB(){
     const key = lbStorageKey();
@@ -791,13 +731,11 @@
       arr = JSON.parse(localStorage.getItem(key) || "[]");
       if(!Array.isArray(arr)) arr = [];
     }catch(e){ arr = []; }
-    // clean any other days (optional best-effort)
+
     try{
       for(let i=0;i<localStorage.length;i++){
         const k = localStorage.key(i);
-        if(k && k.startsWith("rr_leaderboard_") && k !== key){
-          localStorage.removeItem(k);
-        }
+        if(k && k.startsWith("rr_leaderboard_") && k !== key) localStorage.removeItem(k);
       }
     }catch(e){}
     return arr;
@@ -808,8 +746,13 @@
     const arr = loadTodayLB();
     arr.push(entry);
     arr.sort((a,b)=>b.score - a.score);
-    const top = arr.slice(0, 20);
-    localStorage.setItem(key, JSON.stringify(top));
+    localStorage.setItem(key, JSON.stringify(arr.slice(0, 20)));
+  }
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, m => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+    }[m]));
   }
 
   function renderLB(){
@@ -823,8 +766,8 @@
       return;
     }
     arr.forEach((e, idx) => {
-      const tr = document.createElement("tr");
       const modeLabel = e.tag==="NIGHT" ? "🌙 夜間" : (e.tag==="FRENZY" ? "🔥 暴走" : "🫧 白天");
+      const tr = document.createElement("tr");
       tr.innerHTML = `
         <td>${idx+1}</td>
         <td>${escapeHtml(e.name || "鹿粉")}</td>
@@ -835,29 +778,13 @@
     });
   }
 
-  function escapeHtml(s){
-    return String(s).replace(/[&<>"']/g, m => ({
-      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
-    }[m]));
-  }
-
-  function showLeaderboard(){
-    renderLB();
-    $("lb").style.display = "flex";
-  }
-  function hideLeaderboard(){
-    $("lb").style.display = "none";
-  }
+  function showLeaderboard(){ renderLB(); $("lb").style.display = "flex"; }
+  function hideLeaderboard(){ $("lb").style.display = "none"; }
 
   function getPlayerInfo(){
-    // LIFF 優先 LINE 名稱；否則記住上次暱稱
     const last = localStorage.getItem("rr_last_name") || "";
     let name = (liffProfile && liffProfile.displayName) ? liffProfile.displayName : last;
-    if(!name){
-      name = prompt("輸入暱稱（排行榜用）", "鹿粉") || "鹿粉";
-    }else{
-      // allow quick edit when ending? keep as is
-    }
+    if(!name) name = prompt("輸入暱稱（排行榜用）", "鹿粉") || "鹿粉";
     name = name.trim().slice(0, 12) || "鹿粉";
     localStorage.setItem("rr_last_name", name);
     return { name };
@@ -881,7 +808,6 @@
     state.pointerDown = true;
     state.pointerX = p.x;
 
-    // start net down
     if(state.net.phase === "idle"){
       state.net.phase = "down";
       state.net.caughtThisRun = 0;
@@ -897,16 +823,14 @@
     if(!state.pointerDown) return;
     const p = setPointerFromEvent(e);
     state.pointerX = p.x;
-    // allow slight steering while down
     state.net.x = clamp(p.x, state.pool.x+20, state.pool.x+state.pool.w-20);
   }
 
-  function pointerUp(e){
+  function pointerUp(){
     if(state.phase !== "playing") return;
     if(!state.pointerDown) return;
     state.pointerDown = false;
 
-    // start net up
     if(state.net.phase === "down"){
       state.net.phase = "up";
       addRipple(state.net.x, state.net.y, 0.9);
@@ -924,49 +848,38 @@
 
   window.addEventListener("keydown", (e) => {
     if(e.key.toLowerCase() === "r"){
-      resetGame();
-      hideModal();
-      startGame();
+      resetGame(); hideModal(); startGame();
     }
     if(e.key.toLowerCase() === "m"){
-      sfxEnabled = !sfxEnabled;
-      applyAudioToggles();
+      sfxEnabled = !sfxEnabled; applyAudioToggles();
     }
     if(e.key.toLowerCase() === "b"){
-      bgmEnabled = !bgmEnabled;
-      applyAudioToggles();
+      bgmEnabled = !bgmEnabled; applyAudioToggles();
     }
   });
 
   /**********************
-   * Items spawning
+   * Spawning / scoring
    **********************/
   function spawnRatePerSec(){
-    // base
     let r = 2.7;
-    // 6. frenzy: density up
     if(state.event.frenzy) r *= 1.65;
-    // 7. night: a bit more fish
     if(state.event.night) r *= 1.25;
     return r;
   }
 
   function scoreMultiplier(){
-    // base 1.0 + combo soft scaling
-    let m = 1.0 + clamp(state.combo, 0, 30) * 0.03; // up to +0.9
-    if(state.event.frenzy) m *= 1.35; // 6. frenzy: multiplier up
+    let m = 1.0 + clamp(state.combo, 0, 30) * 0.03;
+    if(state.event.frenzy) m *= 1.35;
     return m;
   }
 
   function spawnItem(){
-    const { x, y, w, h } = state.pool;
+    const { x, y, w } = state.pool;
 
-    // spawn near "裂縫" at top center, drifting down
     const crackX = x + w*0.5 + (Math.random()-0.5)*w*0.28;
     const spawnY = y + 8 + Math.random()*10;
 
-    // types:
-    // fragment (common), fish (rare), gold fish (night)
     let type = "fragment";
     let pFish = state.event.night ? 0.26 : 0.18;
     if(state.event.frenzy) pFish += 0.06;
@@ -983,7 +896,6 @@
     const val = (type==="fragment") ? 80 : (type==="fish" ? 160 : 260);
 
     state.items.push({
-      id: Math.random().toString(16).slice(2),
       type,
       x: crackX,
       y: spawnY,
@@ -996,17 +908,13 @@
     });
   }
 
-  /**********************
-   * Collision / Catch
-   **********************/
   function tryCatch(){
     const net = state.net;
     const r = net.radius;
-
     let caught = 0;
+
     for(const it of state.items){
       if(it.caught) continue;
-      // only catch if net is in water area
       const dx = it.x - net.x;
       const dy = it.y - net.y;
       const dist = Math.hypot(dx, dy);
@@ -1020,7 +928,6 @@
         state.combo += 1;
         state.bestCombo = Math.max(state.bestCombo, state.combo);
 
-        // feedback
         playBubble(state.combo);
         addParticles(it.x, it.y, it.type);
       }
@@ -1051,11 +958,19 @@
   /**********************
    * Rendering
    **********************/
-  function drawBackground(){
-    // dynamic background by mode
-    const { frenzy, night } = state.event;
+  function roundRect(x,y,w,h,r){
+    const rr = Math.min(r, w/2, h/2);
+    ctx.beginPath();
+    ctx.moveTo(x+rr, y);
+    ctx.arcTo(x+w, y, x+w, y+h, rr);
+    ctx.arcTo(x+w, y+h, x, y+h, rr);
+    ctx.arcTo(x, y+h, x, y, rr);
+    ctx.arcTo(x, y, x+w, y, rr);
+    ctx.closePath();
+  }
 
-    // base gradient
+  function drawBackground(){
+    const { frenzy, night } = state.event;
     const g = ctx.createLinearGradient(0, 0, 0, H);
     if(night){
       g.addColorStop(0, "#0a0f18");
@@ -1070,7 +985,6 @@
     ctx.fillStyle = g;
     ctx.fillRect(0,0,W,H);
 
-    // subtle stars / shards
     ctx.save();
     ctx.globalAlpha = night ? 0.28 : 0.18;
     ctx.fillStyle = night ? "#ffd36a" : "#7ee7ff";
@@ -1087,7 +1001,6 @@
     const { x,y,w,h } = state.pool;
     const { frenzy, night } = state.event;
 
-    // frame
     ctx.save();
     ctx.fillStyle = "rgba(255,255,255,0.06)";
     ctx.strokeStyle = "rgba(255,255,255,0.16)";
@@ -1096,7 +1009,6 @@
     ctx.fill();
     ctx.stroke();
 
-    // water
     const wg = ctx.createLinearGradient(0, y, 0, y+h);
     if(night){
       wg.addColorStop(0, "rgba(255,211,106,0.14)");
@@ -1112,7 +1024,6 @@
     roundRect(x+8, y+8, w-16, h-16, 18);
     ctx.fill();
 
-    // crack at top
     const cx = x + w*0.5;
     ctx.save();
     ctx.translate(cx, y+18);
@@ -1129,7 +1040,6 @@
     ctx.lineTo(len*0.55, 2);
     ctx.stroke();
 
-    // glow
     ctx.globalAlpha = 0.22;
     ctx.lineWidth = 14;
     ctx.stroke();
@@ -1138,20 +1048,97 @@
     ctx.restore();
   }
 
+  function drawFragment(x,y,s){
+    ctx.save();
+    ctx.translate(x,y);
+    ctx.rotate(Math.sin((x+y)*0.01 + performance.now()*0.002)*0.6);
+    ctx.globalAlpha = 0.92;
+
+    const night = state.event.night;
+    ctx.fillStyle = night ? "rgba(255,211,106,0.90)" : "rgba(126,231,255,0.92)";
+    ctx.strokeStyle = "rgba(255,255,255,0.55)";
+    ctx.lineWidth = 1.2;
+
+    ctx.beginPath();
+    ctx.moveTo(-s*0.6, -s*0.2);
+    ctx.lineTo(0, -s*0.75);
+    ctx.lineTo(s*0.7, -s*0.05);
+    ctx.lineTo(s*0.15, s*0.75);
+    ctx.lineTo(-s*0.75, s*0.25);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.globalAlpha = 0.18;
+    ctx.fillStyle = "rgba(255,255,255,0.9)";
+    ctx.beginPath();
+    ctx.arc(s*0.15, -s*0.25, s*0.25, 0, Math.PI*2);
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  function drawFish(x,y,s,isGold){
+    ctx.save();
+    ctx.translate(x,y);
+    ctx.rotate(Math.sin((x+y)*0.01 + performance.now()*0.002)*0.2);
+
+    const body = isGold ? "rgba(255,211,106,0.92)" : "rgba(170,255,210,0.90)";
+    const fin  = isGold ? "rgba(255,174,70,0.90)" : "rgba(120,240,200,0.85)";
+    const eye  = "rgba(0,0,0,0.55)";
+
+    ctx.globalAlpha = 0.96;
+    ctx.fillStyle = body;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, s*0.85, s*0.55, 0, 0, Math.PI*2);
+    ctx.fill();
+
+    ctx.fillStyle = fin;
+    ctx.beginPath();
+    ctx.moveTo(-s*0.9, 0);
+    ctx.lineTo(-s*1.35, -s*0.45);
+    ctx.lineTo(-s*1.25, 0);
+    ctx.lineTo(-s*1.35, s*0.45);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.globalAlpha = 0.75;
+    ctx.beginPath();
+    ctx.moveTo(0, -s*0.1);
+    ctx.quadraticCurveTo(s*0.15, -s*0.75, s*0.65, -s*0.2);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.globalAlpha = 0.9;
+    ctx.fillStyle = "rgba(255,255,255,0.9)";
+    ctx.beginPath();
+    ctx.arc(s*0.38, -s*0.10, s*0.14, 0, Math.PI*2);
+    ctx.fill();
+    ctx.fillStyle = eye;
+    ctx.beginPath();
+    ctx.arc(s*0.42, -s*0.10, s*0.07, 0, Math.PI*2);
+    ctx.fill();
+
+    if(isGold && state.event.night){
+      ctx.globalAlpha = 0.95;
+      ctx.fillStyle = "rgba(255,255,255,0.9)";
+      ctx.font = `900 ${Math.floor(s*1.0)}px ui-sans-serif, system-ui`;
+      ctx.textAlign = "center";
+      ctx.fillText("🌙", s*1.1, -s*0.65);
+    }
+    ctx.restore();
+  }
+
   function drawItems(dt){
     for(const it of state.items){
       if(it.caught) continue;
-
-      // move
       it.wobble += dt * 2.2;
       it.x += it.vx * dt + Math.sin(it.wobble) * 10 * dt;
       it.y += it.vy * dt;
 
-      // bounds wrap / bounce
       const { x,y,w,h } = state.pool;
       it.x = clamp(it.x, x+14, x+w-14);
 
-      // if out of pool bottom, recycle upward
       if(it.y > y + h + 30){
         it.y = y + 8;
         it.x = x + w*0.5 + (Math.random()-0.5)*w*0.28;
@@ -1159,32 +1146,22 @@
         it.vy = 35 + Math.random()*55;
       }
 
-      // render
-      if(it.type === "fragment"){
-        drawFragment(it.x, it.y, it.size);
-      }else if(it.type === "fish"){
-        drawFish(it.x, it.y, it.size, false);
-      }else{
-        drawFish(it.x, it.y, it.size, true); // goldfish
-      }
+      if(it.type === "fragment") drawFragment(it.x, it.y, it.size);
+      else if(it.type === "fish") drawFish(it.x, it.y, it.size, false);
+      else drawFish(it.x, it.y, it.size, true);
     }
   }
 
   function drawNet(dt){
     const net = state.net;
-    const { x,y,w,h } = state.pool;
+    const { x,y,w } = state.pool;
 
-    // update net motion
     if(net.phase === "down"){
       net.y += net.speed * dt;
-      // catch while moving down (feels responsive)
       tryCatch();
       if(net.y >= net.targetY){
         net.y = net.targetY;
-        // if user still holding, keep at depth; else go up
-        if(!state.pointerDown){
-          net.phase = "up";
-        }
+        if(!state.pointerDown) net.phase = "up";
       }
     }else if(net.phase === "up"){
       net.y -= net.speed * dt;
@@ -1192,18 +1169,14 @@
       if(net.y <= y + 12){
         net.y = y + 12;
         net.phase = "idle";
-
-        // combo break if empty run
         if(net.caughtThisRun === 0){
           state.combo = 0;
           state.mult = scoreMultiplier();
         }
-
         net.caughtThisRun = 0;
       }
     }
 
-    // draw handle line
     ctx.save();
     ctx.globalAlpha = 0.85;
     ctx.strokeStyle = "rgba(255,255,255,0.65)";
@@ -1213,7 +1186,6 @@
     ctx.lineTo(net.x, net.y - net.radius*0.9);
     ctx.stroke();
 
-    // draw ring
     ctx.globalAlpha = 0.95;
     ctx.strokeStyle = state.event.night ? "rgba(255,211,106,0.90)" : "rgba(126,231,255,0.90)";
     ctx.lineWidth = 3;
@@ -1221,7 +1193,6 @@
     ctx.ellipse(net.x, net.y, net.radius, net.radius*0.75, 0, 0, Math.PI*2);
     ctx.stroke();
 
-    // mesh
     ctx.globalAlpha = 0.35;
     ctx.strokeStyle = "rgba(255,255,255,0.55)";
     ctx.lineWidth = 1;
@@ -1233,7 +1204,6 @@
     }
     ctx.restore();
 
-    // hint cursor when idle
     if(net.phase === "idle" && state.phase==="playing"){
       const px = clamp(state.pointerX || (x+w/2), x+20, x+w-20);
       ctx.save();
@@ -1304,104 +1274,6 @@
     ctx.restore();
   }
 
-  function drawFragment(x,y,s){
-    ctx.save();
-    ctx.translate(x,y);
-    ctx.rotate(Math.sin((x+y)*0.01 + performance.now()*0.002)*0.6);
-    ctx.globalAlpha = 0.92;
-
-    const night = state.event.night;
-    ctx.fillStyle = night ? "rgba(255,211,106,0.90)" : "rgba(126,231,255,0.92)";
-    ctx.strokeStyle = "rgba(255,255,255,0.55)";
-    ctx.lineWidth = 1.2;
-
-    ctx.beginPath();
-    ctx.moveTo(-s*0.6, -s*0.2);
-    ctx.lineTo(0, -s*0.75);
-    ctx.lineTo(s*0.7, -s*0.05);
-    ctx.lineTo(s*0.15, s*0.75);
-    ctx.lineTo(-s*0.75, s*0.25);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-
-    ctx.globalAlpha = 0.18;
-    ctx.fillStyle = "rgba(255,255,255,0.9)";
-    ctx.beginPath();
-    ctx.arc(s*0.15, -s*0.25, s*0.25, 0, Math.PI*2);
-    ctx.fill();
-
-    ctx.restore();
-  }
-
-  function drawFish(x,y,s,isGold){
-    ctx.save();
-    ctx.translate(x,y);
-    ctx.rotate(Math.sin((x+y)*0.01 + performance.now()*0.002)*0.2);
-
-    const body = isGold ? "rgba(255,211,106,0.92)" : "rgba(170,255,210,0.90)";
-    const fin  = isGold ? "rgba(255,174,70,0.90)" : "rgba(120,240,200,0.85)";
-    const eye  = "rgba(0,0,0,0.55)";
-
-    // body
-    ctx.globalAlpha = 0.96;
-    ctx.fillStyle = body;
-    ctx.beginPath();
-    ctx.ellipse(0, 0, s*0.85, s*0.55, 0, 0, Math.PI*2);
-    ctx.fill();
-
-    // tail
-    ctx.fillStyle = fin;
-    ctx.beginPath();
-    ctx.moveTo(-s*0.9, 0);
-    ctx.lineTo(-s*1.35, -s*0.45);
-    ctx.lineTo(-s*1.25, 0);
-    ctx.lineTo(-s*1.35, s*0.45);
-    ctx.closePath();
-    ctx.fill();
-
-    // fin top
-    ctx.globalAlpha = 0.75;
-    ctx.beginPath();
-    ctx.moveTo(0, -s*0.1);
-    ctx.quadraticCurveTo(s*0.15, -s*0.75, s*0.65, -s*0.2);
-    ctx.closePath();
-    ctx.fill();
-
-    // eye
-    ctx.globalAlpha = 0.9;
-    ctx.fillStyle = "rgba(255,255,255,0.9)";
-    ctx.beginPath();
-    ctx.arc(s*0.38, -s*0.10, s*0.14, 0, Math.PI*2);
-    ctx.fill();
-    ctx.fillStyle = eye;
-    ctx.beginPath();
-    ctx.arc(s*0.42, -s*0.10, s*0.07, 0, Math.PI*2);
-    ctx.fill();
-
-    // moon mark for night goldfish
-    if(isGold && state.event.night){
-      ctx.globalAlpha = 0.95;
-      ctx.fillStyle = "rgba(255,255,255,0.9)";
-      ctx.font = `900 ${Math.floor(s*1.0)}px ui-sans-serif, system-ui`;
-      ctx.textAlign = "center";
-      ctx.fillText("🌙", s*1.1, -s*0.65);
-    }
-
-    ctx.restore();
-  }
-
-  function roundRect(x,y,w,h,r){
-    const rr = Math.min(r, w/2, h/2);
-    ctx.beginPath();
-    ctx.moveTo(x+rr, y);
-    ctx.arcTo(x+w, y, x+w, y+h, rr);
-    ctx.arcTo(x+w, y+h, x, y+h, rr);
-    ctx.arcTo(x, y+h, x, y, rr);
-    ctx.arcTo(x, y, x+w, y, rr);
-    ctx.closePath();
-  }
-
   /**********************
    * Main loop
    **********************/
@@ -1412,17 +1284,6 @@
     const dt = state.lastTs ? Math.min(0.033, (ts - state.lastTs)/1000) : 0;
     state.lastTs = ts;
 
-    // periodic event refresh (in case hour changes mid-play)
-    if(state.phase === "playing" && Math.random() < 0.02){
-      const before = state.modeTag;
-      setModeUI();
-      if(state.modeTag !== before){
-        // subtle reset multiplier visuals
-        state.mult = scoreMultiplier();
-      }
-    }
-
-    // Update timer
     if(state.phase === "playing"){
       state.tLeft -= dt;
       if(state.tLeft <= 0){
@@ -1432,23 +1293,17 @@
       }
     }
 
-    // Spawn
     if(state.phase === "playing"){
       state.spawnAcc += dt * spawnRatePerSec();
       while(state.spawnAcc >= 1){
         spawnItem();
         state.spawnAcc -= 1;
       }
-      // cap item count
-      if(state.items.length > 90){
-        state.items.splice(0, state.items.length - 90);
-      }
-      // keep multiplier updated
+      if(state.items.length > 90) state.items.splice(0, state.items.length - 90);
       state.mult = scoreMultiplier();
       updateHUD();
     }
 
-    // Render
     drawBackground();
     drawPool();
     if(state.phase === "playing" || state.phase === "ended"){
@@ -1457,10 +1312,8 @@
       drawParticles(dt);
       drawNet(dt);
     }else{
-      // still animate light fx
       drawRipples(dt);
       drawParticles(dt);
-      // show idle net
       drawNet(0);
     }
     drawTitleOverlay();
@@ -1474,24 +1327,16 @@
     $("modal").style.display = "flex";
     state.phase = "tutorial";
   }
-  function hideModal(){
-    $("modal").style.display = "none";
-  }
+  function hideModal(){ $("modal").style.display = "none"; }
 
   $("btnStart").addEventListener("click", () => {
-    hideModal();
-    resetGame();
-    startGame();
+    hideModal(); resetGame(); startGame();
   });
   $("btnQuickStart").addEventListener("click", () => {
-    // skip tutorial
-    hideModal();
-    resetGame();
-    startGame();
+    hideModal(); resetGame(); startGame();
   });
   $("btnHow").addEventListener("click", () => {
-    setModeUI();
-    showModal();
+    setModeUI(); showModal();
   });
 
   $("btnLeaderboard").addEventListener("click", showLeaderboard);
@@ -1499,16 +1344,12 @@
   $("btnCloseLB").addEventListener("click", hideLeaderboard);
 
   $("btnRestart").addEventListener("click", () => {
-    resetGame();
-    hideModal();
-    startGame();
+    resetGame(); hideModal(); startGame();
   });
 
   $("btnSoundHint").addEventListener("click", () => {
-    // user gesture => start audio
     ensureAudio();
     if(audioCtx.state === "suspended") audioCtx.resume().catch(()=>{});
-    // little bubble preview
     playBubble(state.combo || 0);
   });
 
@@ -1527,7 +1368,6 @@
     applyAudioToggles();
   });
 
-  // make sure overlays do not block pointer when hidden
   $("lb").addEventListener("click", (e) => {
     if(e.target === $("lb")) hideLeaderboard();
   });
@@ -1540,8 +1380,6 @@
     applyAudioToggles();
     updateRotateLock();
     resetGame();
-
-    // show tutorial at start
     showModal();
   }
   boot();
