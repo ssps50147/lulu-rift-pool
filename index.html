@@ -1,1127 +1,295 @@
 <!doctype html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>裂縫水池：鹿粉撈撈祭（LIFF 版）</title>
-  <style>
-    :root{
-      --card:rgba(255,255,255,.62);
-      --ink:rgba(10,18,32,.86);
-      --ink2:rgba(10,18,32,.62);
-      --white:rgba(255,255,255,.92);
-      --shadow: 0 18px 60px rgba(0,0,0,.35);
-      --r: 18px;
-    }
-    html,body{
-      height:100%;margin:0;
-      background: radial-gradient(1200px 700px at 50% 20%, #1a325a 0%, #081225 55%, #050b16 100%);
-      color:var(--white);
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
-    }
-    .wrap{height:100%; display:grid; place-items:center; padding:14px;}
-    .frame{
-      position:relative;
-      width:min(980px, 100%);
-      aspect-ratio:16/9;
-      max-height: calc(100vh - 28px);
-      border-radius:22px;
-      box-shadow: var(--shadow);
-      overflow:hidden;
-      background: radial-gradient(circle at 50% 25%, #a7f3ff 0%, #2aa6ff 28%, #0b6ea8 55%, #063254 100%);
-    }
-    canvas{width:100%; height:100%; display:block; touch-action:none;}
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>裂縫水池：鹿粉撈撈祭</title>
 
-    .hud{
-      position:absolute; inset:14px 14px auto 14px;
-      display:flex; gap:12px; align-items:stretch; flex-wrap:wrap;
-      pointer-events:none;
-    }
-    .card{
-      background: var(--card);
-      color: var(--ink);
-      border-radius: var(--r);
-      padding: 10px 12px;
-      backdrop-filter: blur(10px);
-      box-shadow: 0 10px 30px rgba(0,0,0,.18);
-      border: 1px solid rgba(255,255,255,.35);
-      min-width: 180px;
-    }
-    .card b{font-weight:800}
-    .row{display:flex; gap:10px; align-items:center; justify-content:space-between;}
-    .sub{font-size:12px; color: var(--ink2); margin-top:4px; line-height:1.35;}
-    .bar{height:10px; width: 180px; background: rgba(10,18,32,.10); border-radius: 999px; overflow:hidden; margin-top:8px;}
-    .bar i{display:block;height:100%;width:100%; background: rgba(255,213,120,.95);}
-    .pill{
-      display:inline-flex; align-items:center; gap:8px;
-      background: rgba(10,18,32,.10);
-      padding: 6px 10px;
-      border-radius: 999px;
-      font-size: 12px;
-      color: var(--ink2);
-      margin-top:8px;
-      flex-wrap:wrap;
-    }
+<style>
+/* ===== 基本色系 ===== */
+:root{
+  --pool:#2aa6ff;
+  --hud:rgba(255,255,255,.65);
+  --ink:#0a1220;
+}
+body{
+  margin:0;
+  height:100vh;
+  background:radial-gradient(1200px 700px at 50% 20%,#1a325a,#081225);
+  font-family:system-ui,"Noto Sans TC","Microsoft JhengHei";
+  overflow:hidden;
+}
+.wrap{height:100%;display:grid;place-items:center;}
+.frame{
+  position:relative;
+  width:100vw;
+  height:100dvh;
+  background:radial-gradient(circle at 50% 25%,#a7f3ff,var(--pool),#063254);
+}
+canvas{width:100%;height:100%;display:block}
 
-    .overlay{
-      position:absolute; inset:0;
-      display:grid; place-items:center;
-      background: radial-gradient(900px 600px at 50% 30%, rgba(255,255,255,.22) 0%, rgba(0,0,0,.35) 55%, rgba(0,0,0,.55) 100%);
-    }
-    .panel{
-      width: min(580px, 92%);
-      background: rgba(255,255,255,.70);
-      color: var(--ink);
-      border-radius: 24px;
-      padding: 18px 18px 16px;
-      box-shadow: var(--shadow);
-      border: 1px solid rgba(255,255,255,.4);
-      backdrop-filter: blur(12px);
-    }
-    .title{
-      display:flex; align-items:center; justify-content:space-between; gap:12px;
-    }
-    h1{margin:0; font-size: 22px; letter-spacing: .2px;}
-    .tag{font-size: 12px; color: var(--ink2); background: rgba(10,18,32,.08); padding:6px 10px; border-radius:999px;}
-    .desc{margin: 10px 0 14px; color: var(--ink2); line-height: 1.6; font-size: 14px;}
-    .btns{display:flex; gap:10px; flex-wrap:wrap; margin-top: 12px;}
-    button{
-      appearance:none; border:0; cursor:pointer;
-      border-radius: 14px;
-      padding: 11px 14px;
-      font-weight: 800;
-      background: rgba(10,18,32,.85);
-      color: rgba(255,255,255,.92);
-      box-shadow: 0 10px 25px rgba(0,0,0,.22);
-    }
-    button.secondary{
-      background: rgba(10,18,32,.10);
-      color: var(--ink);
-      font-weight: 700;
-      box-shadow:none;
-      border: 1px solid rgba(10,18,32,.12);
-    }
-    .small{font-size:12px; color: var(--ink2);}
-    .rank{
-      margin-top: 10px;
-      background: rgba(10,18,32,.06);
-      border-radius: 16px;
-      padding: 10px 12px;
-      border: 1px solid rgba(10,18,32,.06);
-    }
-    .rank h2{margin:0 0 8px; font-size: 14px; color: rgba(10,18,32,.75);}
-    .rank ol{margin:0; padding-left: 18px; color: rgba(10,18,32,.72); font-size: 13px; line-height: 1.6;}
-    .kbd{
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-      font-size: 12px;
-      background: rgba(255,255,255,.6);
-      padding: 2px 6px;
-      border-radius: 8px;
-      border: 1px solid rgba(10,18,32,.10);
-    }
-    .toast{
-      position:absolute; left: 16px; top: 86px;
-      background: rgba(255,255,255,.72);
-      color: rgba(10,18,32,.86);
-      border-radius: 14px;
-      padding: 10px 12px;
-      border: 1px solid rgba(255,255,255,.45);
-      backdrop-filter: blur(10px);
-      max-width: min(760px, calc(100% - 32px));
-      box-shadow: 0 10px 30px rgba(0,0,0,.18);
-      opacity:0; transform: translateY(-6px);
-      transition: opacity .18s ease, transform .18s ease;
-      pointer-events:none;
-      white-space: pre-line;
-    }
-    .toast.show{opacity:1; transform: translateY(0);}
+/* ===== HUD ===== */
+.hud{
+  position:absolute;top:12px;left:12px;right:12px;
+  display:flex;gap:8px;flex-wrap:wrap;z-index:5
+}
+.card{
+  background:var(--hud);
+  border-radius:16px;
+  padding:8px 12px;
+  color:var(--ink);
+  flex:1;
+  min-width:140px;
+}
 
-    /* ===== LIFF-only top bar ===== */
-    .liffbar{
-      position:absolute;
-      right: 14px;
-      top: 14px;
-      display:flex;
-      gap:10px;
-      z-index: 50;
-      pointer-events:auto;
-    }
-    .liffbar button{
-      padding: 10px 12px;
-      border-radius: 14px;
-      font-weight: 900;
-      background: rgba(10,18,32,.72);
-      color: rgba(255,255,255,.92);
-      border: 1px solid rgba(255,255,255,.20);
-      box-shadow: 0 10px 25px rgba(0,0,0,.22);
-    }
-    .hidden{display:none !important;}
-  </style>
+/* ===== Overlay ===== */
+.overlay{
+  position:absolute;inset:0;
+  background:#0007;
+  display:grid;place-items:center;
+  z-index:10
+}
+.panel{
+  background:#fff;
+  border-radius:22px;
+  padding:18px;
+  max-width:90%;
+  color:#111;
+}
+
+/* ===== Buttons ===== */
+button{
+  padding:10px 14px;
+  border-radius:18px;
+  border:none;
+  background:#111;
+  color:#fff;
+  font-weight:800;
+  cursor:pointer;
+}
+
+/* ===== Toast ===== */
+.toast{
+  position:absolute;top:90px;left:12px;right:12px;
+  background:#fff9;
+  border-radius:16px;
+  padding:10px 12px;
+  opacity:0;
+  transition:.25s;
+  z-index:20
+}
+.toast.show{opacity:1}
+
+/* ===== LIFF ===== */
+.liffbar{
+  position:absolute;top:12px;right:12px;z-index:30
+}
+.liffbar button{
+  background:#000a;color:#fff
+}
+
+/* ===== 直向鎖定遮罩 ===== */
+.portrait-lock{
+  position:absolute;inset:0;
+  display:none;
+  backdrop-filter:blur(10px);
+  background:rgba(0,0,0,.5);
+  place-items:center;
+  z-index:50
+}
+.portrait-lock__content{
+  text-align:center;
+  color:#fff;
+  font-weight:900
+}
+.rotate-icon{
+  font-size:64px;
+  margin-bottom:12px;
+  animation:rotatePhone 1.4s infinite
+}
+@keyframes rotatePhone{
+  0%{transform:rotate(0)}
+  25%{transform:rotate(-20deg)}
+  50%{transform:rotate(0)}
+  75%{transform:rotate(20deg)}
+  100%{transform:rotate(0)}
+}
+
+/* ===== 夜間（金魚之夜）樣式 ===== */
+body.fish-night{
+  --pool:#ffb347;
+  --hud:rgba(255,245,210,.78);
+}
+body.fish-night .card{border-radius:24px}
+body.fish-night .panel{
+  background:linear-gradient(180deg,#fff0c8,#ffd78c);
+  border-radius:30px
+}
+body.fish-night .panel h2{color:#6a3b00}
+</style>
 </head>
+
 <body>
 <div class="wrap">
-  <div class="frame">
-    <!-- LIFF 專用：只在 LINE App 內顯示 -->
-    <div class="liffbar hidden" id="liffBar">
-      <button id="closeBtn" title="關閉 LIFF 視窗">關閉</button>
-    </div>
+<div class="frame">
 
-    <canvas id="c" width="1280" height="720"></canvas>
+<div class="liffbar" id="liffBar" style="display:none">
+  <button onclick="liff.closeWindow()">關閉</button>
+</div>
 
-    <div class="hud" aria-hidden="true">
-      <div class="card">
-        <div class="row">
-          <div>裂縫收集：<b id="score">0</b></div>
-          <div>⏳ <b id="time">60</b>s</div>
-        </div>
-        <div class="sub">主角：微光碎片｜整點可能發布探索提示並刷新整點回聲</div>
-        <div class="pill">
-          連擊：<b id="combo">0</b>
-          稀有金魚：<b id="fishCount">0</b>
-          稱號：<b id="title">新手鹿粉</b>
-        </div>
-      </div>
+<canvas id="c" width="1280" height="720"></canvas>
 
-      <div class="card">
-        <div class="row">
-          <div>紙網耐久：<b id="durText">100</b></div>
-          <div>破網：<b id="breaks">0</b></div>
-        </div>
-        <div class="bar"><i id="durBar"></i></div>
-        <div class="sub">按住下網撈起物件會耗損；耐久歸零會破（自動換新）</div>
-      </div>
-    </div>
+<div class="hud">
+  <div class="card">分數：<b id="score">0</b></div>
+  <div class="card">時間：<b id="time">60</b>s</div>
+  <div class="card">稱號：<b id="title">新手鹿粉</b></div>
+</div>
 
-    <div class="toast" id="toast"></div>
+<div class="toast" id="toast"></div>
 
-    <div class="overlay" id="overlay">
-      <div class="panel" role="dialog" aria-modal="true">
-        <div class="title">
-          <h1>🌌 裂縫水池：鹿粉撈撈祭</h1>
-          <div class="tag">LIFF 專用關閉鍵</div>
-        </div>
-        <div class="desc">
-          你是鹿粉！撈起「微光碎片」收集線索。<br/>
-          <b>回聲碎片</b>會刷出探索提示；<b>金魚</b>是稀有驚喜。<br/>
-          「整點（xx:00）」前 10 秒內，有機率發布一次神秘探索提示並刷新「整點回聲碎片」。
-        </div>
-
-        <div class="rank">
-          <h2>🏆 本機排行榜（Top 5）</h2>
-          <ol id="rankList"></ol>
-        </div>
-
-        <div class="btns">
-          <button id="startBtn">開始撈撈！</button>
-          <button class="secondary" id="muteBtn">音效：開</button>
-          <button class="secondary" id="resetRankBtn">清空排行榜</button>
-        </div>
-
-        <div class="small" style="margin-top:10px;">
-          操作：滑鼠/手指移動網子，<b>按住</b>下網撈起。<br/>
-          鍵盤：<span class="kbd">R</span> 重開（遊戲中可用）
-        </div>
-
-        <div class="small" id="resultText" style="margin-top:10px;"></div>
-      </div>
-    </div>
+<div class="overlay" id="overlay">
+  <div class="panel">
+    <h2>🌌 裂縫水池：鹿粉撈撈祭</h2>
+    <p>
+      ⚡ 裂縫暴走：12:00–14:00<br/>
+      🌙 金魚之夜：19:00–21:00
+    </p>
+    <button onclick="start()">開始遊戲</button>
   </div>
 </div>
 
-<!-- LIFF SDK（必要） -->
+<div id="portraitLock" class="portrait-lock">
+  <div class="portrait-lock__content">
+    <div class="rotate-icon">🔄</div>
+    🦒 請橫向遊玩
+  </div>
+</div>
+
+</div>
+</div>
+
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-
 <script>
-(() => {
-  // =========================
-  // ✅ 你只要改這一行：填入你的 LIFF ID
-  // =========================
-  const LIFF_ID = "2008825801-LXHTWx5N";
-
-  // ===== LIFF: 偵測是否在 LINE 內開啟，並顯示關閉按鈕 =====
-  const liffBar = document.getElementById('liffBar');
-  const closeBtn = document.getElementById('closeBtn');
-
-  async function initLiffAndUi(){
-    // 沒填 LIFF_ID 就不初始化（避免報錯）
-    if(!window.liff || !LIFF_ID || LIFF_ID.includes("PASTE_")) return;
-
-    try{
-      await liff.init({ liffId: LIFF_ID });
-
-      // 只在 LINE App 內顯示關閉按鈕
-      if (liff.isInClient && liff.isInClient()) {
-        liffBar.classList.remove('hidden');
-      }
-
-      closeBtn.addEventListener('click', ()=>{
-        if (liff.isInClient && liff.isInClient()) {
-          liff.closeWindow();
-        }
-      });
-    }catch(e){
-      // 初始化失敗也不影響一般瀏覽器遊玩
-      console.warn("LIFF init failed:", e);
-    }
-  }
-  initLiffAndUi();
-
-  // ===== Canvas =====
-  const canvas = document.getElementById('c');
-  const ctx = canvas.getContext('2d');
-  const W = canvas.width, H = canvas.height;
-
-  // ===== UI =====
-  const uiScore = document.getElementById('score');
-  const uiTime = document.getElementById('time');
-  const uiCombo = document.getElementById('combo');
-  const uiFishCount = document.getElementById('fishCount');
-  const uiTitle = document.getElementById('title');
-  const uiDurText = document.getElementById('durText');
-  const uiDurBar = document.getElementById('durBar');
-  const uiBreaks = document.getElementById('breaks');
-
-  const overlay = document.getElementById('overlay');
-  const startBtn = document.getElementById('startBtn');
-  const muteBtn = document.getElementById('muteBtn');
-  const resetRankBtn = document.getElementById('resetRankBtn');
-  const rankList = document.getElementById('rankList');
-  const resultText = document.getElementById('resultText');
-  const toast = document.getElementById('toast');
-
-  // ===== Helpers =====
-  const rand = (a,b)=> a + Math.random()*(b-a);
-  const clamp = (v,a,b)=> Math.max(a, Math.min(b, v));
-  const dist2 = (ax,ay,bx,by)=> { const dx=ax-bx, dy=ay-by; return dx*dx+dy*dy; };
-
-  // ===== Audio =====
-  let audioOn = true;
-  let actx = null;
-  function beep(freq=440, dur=0.06, type="sine", gain=0.04){
-    if(!audioOn) return;
-    try{
-      if(!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
-      const o = actx.createOscillator();
-      const g = actx.createGain();
-      o.type = type;
-      o.frequency.value = freq;
-      g.gain.value = gain;
-      o.connect(g); g.connect(actx.destination);
-      o.start();
-      o.stop(actx.currentTime + dur);
-    }catch(_){}
-  }
-
-  // ===== Leaderboard =====
-  const LS_KEY = "lulu_rift_pool_rank_liff_onlyclose_v1";
-  function loadRank(){
-    try{
-      const raw = localStorage.getItem(LS_KEY);
-      const arr = raw ? JSON.parse(raw) : [];
-      return Array.isArray(arr) ? arr : [];
-    }catch(_){ return []; }
-  }
-  function saveRank(arr){
-    try{ localStorage.setItem(LS_KEY, JSON.stringify(arr)); }catch(_){}
-  }
-  function renderRank(){
-    const arr = loadRank().slice(0,5);
-    rankList.innerHTML = "";
-    if(arr.length === 0){
-      const li = document.createElement("li");
-      li.textContent = "還沒有紀錄，快去撈第一名！";
-      rankList.appendChild(li);
-      return;
-    }
-    for(const r of arr){
-      const li = document.createElement("li");
-      li.textContent = `${r.score} 分（破網 ${r.breaks} 次｜最高連擊 ${r.maxCombo}｜金魚 ${r.fishHits}）`;
-      rankList.appendChild(li);
-    }
-  }
-
-  // ===== Toast =====
-  let toastTimer = 0;
-  function showToast(text){
-    toast.textContent = text;
-    toast.classList.add("show");
-    toastTimer = 2.6;
-  }
-
-  // ===== Random Hourly Hint =====
-  let lastHourlyKey = "";
-  function hourlyKey(d){
-    const y = d.getFullYear();
-    const m = String(d.getMonth()+1).padStart(2,"0");
-    const day = String(d.getDate()).padStart(2,"0");
-    const h = String(d.getHours()).padStart(2,"0");
-    return `${y}-${m}-${day} ${h}`;
-  }
-  const hourlyHintPool = [
-    "🕳️ 整點探索提示\n裂縫在呼吸。碎片會更靠近水面。",
-    "🛰️ 整點探索提示\n系統掃描中…鹿粉請保持冷靜。",
-    "👀 整點探索提示\n反向標記風險上升（但獎勵也上升）。",
-    "✨ 整點探索提示\n回聲碎片出現率短暫提升！",
-    "🌌 整點探索提示\n鹿鹿抬頭看了一秒：『來了。』",
-    "📡 整點探索提示\n你聽到極輕的嗡鳴聲——不要抬頭。"
-  ];
-
-  let echoBoostTimer = 0;
-  function triggerHourlyEvent(){
-    const msg = hourlyHintPool[(Math.random()*hourlyHintPool.length)|0];
-    beep(820, 0.08, "triangle", 0.05);
-
-    echoBoostTimer = 10;
-    shards.push(makeSpecialHourlyEchoShard());
-    showToast(msg + "\n✨整點回聲碎片已刷新！");
-  }
-
-  // ===== Game State =====
-  const maxDurability = 100;
-  const GAME_SECONDS = 60;
-
-  let running = false;
-  let timeLeft = GAME_SECONDS;
-  let score = 0;
-  let combo = 0;
-  let maxCombo = 0;
-  let breaks = 0;
-  let fishHits = 0;
-
-  const pointer = { x: W*0.5, y: H*0.55, pressed: false };
-
-  const net = {
-    x: pointer.x, y: pointer.y,
-    r: 38,
-    down: false,
-    durability: maxDurability,
-    broken: false,
-    cooldown: 0
-  };
-
-  const shardTypes = [
-    { key:"stardust", name:"星屑", score:1, dmg:[4,7],  speed:1.00, rarity:0.70, color:"rgba(255,244,198,.95)", glow:"rgba(255,255,255,.75)" },
-    { key:"prism",    name:"棱晶", score:2, dmg:[7,12], speed:1.35, rarity:0.23, color:"rgba(222,210,255,.95)", glow:"rgba(210,255,250,.55)" },
-    { key:"echo",     name:"回聲", score:3, dmg:[10,16],speed:1.55, rarity:0.07, color:"rgba(188,255,235,.95)", glow:"rgba(255,255,255,.85)" }
-  ];
-
-  function pickShardType(){
-    const boost = echoBoostTimer > 0;
-    const weights = shardTypes.map(t => {
-      let w = t.rarity;
-      if (boost && t.key === "echo") w *= 2.6;
-      if (boost && t.key === "stardust") w *= 0.85;
-      return w;
-    });
-    const total = weights.reduce((a,b)=>a+b,0);
-    let r = Math.random()*total;
-    for(let i=0;i<shardTypes.length;i++){
-      r -= weights[i];
-      if(r <= 0) return shardTypes[i];
-    }
-    return shardTypes[0];
-  }
-
-  function makeShard(){
-    const t = pickShardType();
-    const baseSp = rand(55, 90) * t.speed;
-    const ang = rand(0, Math.PI*2);
-    return {
-      kind: "shard",
-      type: t,
-      x: rand(80, W-80),
-      y: rand(120, H-90),
-      vx: Math.cos(ang)*baseSp,
-      vy: Math.sin(ang)*baseSp*0.55,
-      r: rand(10, 14),
-      tw: rand(0, Math.PI*2),
-      alive: true,
-      hourly: false
-    };
-  }
-
-  function makeSpecialHourlyEchoShard(){
-    const baseSp = rand(75, 105) * 1.65;
-    const ang = rand(0, Math.PI*2);
-    return {
-      kind: "shard",
-      type: {
-        key:"echo_hourly",
-        name:"回聲·整點",
-        score:4,
-        dmg:[12,18],
-        speed:1.7,
-        rarity:0,
-        color:"rgba(210,255,245,.98)",
-        glow:"rgba(255,255,255,.92)"
-      },
-      x: rand(100, W-100),
-      y: rand(140, H-110),
-      vx: Math.cos(ang)*baseSp,
-      vy: Math.sin(ang)*baseSp*0.55,
-      r: rand(12, 16),
-      tw: rand(0, Math.PI*2),
-      alive: true,
-      hourly: true
-    };
-  }
-
-  function makeFish(){
-    const baseSp = rand(90, 140);
-    const ang = rand(0, Math.PI*2);
-    return {
-      kind: "fish",
-      x: rand(90, W-90),
-      y: rand(140, H-90),
-      vx: Math.cos(ang)*baseSp,
-      vy: Math.sin(ang)*baseSp*0.55,
-      r: rand(18, 22),
-      wiggle: rand(0, Math.PI*2),
-      alive: true
-    };
-  }
-
-  let shards = [];
-  let fish = null;
-
-  const pops = [];
-  function spawnPop(x,y,text){ pops.push({x,y,vy:-30,t:0.7,text}); }
-
-  let spawnTimer = 0;
-  let fishTimer = 0;
-
-  function resetGame(){
-    running = true;
-    timeLeft = GAME_SECONDS;
-    score = 0; combo = 0; maxCombo = 0;
-    breaks = 0; fishHits = 0;
-
-    net.x = W*0.5; net.y = H*0.55;
-    net.down = false;
-    net.durability = maxDurability;
-    net.broken = false;
-    net.cooldown = 0;
-
-    shards = Array.from({length: 12}, () => makeShard());
-    fish = null;
-    pops.length = 0;
-    spawnTimer = 0;
-    fishTimer = 0;
-
-    echoBoostTimer = 0;
-
-    uiScore.textContent = score;
-    uiTime.textContent = timeLeft;
-    uiCombo.textContent = combo;
-    uiFishCount.textContent = fishHits;
-    uiBreaks.textContent = breaks;
-    setDurUI();
-    setTitleUI();
-
-    showToast("鹿鹿：別急，碎片會自己靠近。");
-  }
-
-  function endGame(){
-    running = false;
-
-    const arr = loadRank();
-    arr.push({score, breaks, maxCombo, fishHits, ts: Date.now()});
-    arr.sort((a,b) => b.score - a.score || a.breaks - b.breaks || b.maxCombo - a.maxCombo);
-    saveRank(arr.slice(0, 20));
-    renderRank();
-
-    resultText.innerHTML = `結算：<b>${score}</b> 分｜破網 <b>${breaks}</b> 次｜最高連擊 <b>${maxCombo}</b>｜金魚 <b>${fishHits}</b>｜稱號：<b>${titleFromScore(score)}</b>`;
-    overlay.style.display = "grid";
-  }
-
-  function titleFromScore(s){
-    if(s >= 95) return "裂縫觀測員";
-    if(s >= 70) return "碎片收集師";
-    if(s >= 45) return "熟練鹿粉";
-    if(s >= 25) return "見習鹿粉";
-    return "新手鹿粉";
-  }
-  function setTitleUI(){ uiTitle.textContent = titleFromScore(score); }
-  function setDurUI(){
-    uiDurText.textContent = Math.round(net.durability);
-    uiDurBar.style.width = `${(net.durability/maxDurability)*100}%`;
-  }
-
-  // ===== Input =====
-  function setPointerFromClient(clientX, clientY){
-    const rect = canvas.getBoundingClientRect();
-    pointer.x = (clientX - rect.left) * (W / rect.width);
-    pointer.y = (clientY - rect.top)  * (H / rect.height);
-  }
-  canvas.addEventListener('mousemove', (e)=> setPointerFromClient(e.clientX, e.clientY));
-  canvas.addEventListener('mousedown', (e)=>{ setPointerFromClient(e.clientX,e.clientY); pointer.pressed = true; if(actx && actx.state==="suspended") actx.resume?.(); });
-  window.addEventListener('mouseup', ()=> pointer.pressed = false);
-
-  canvas.addEventListener('touchstart', (e)=>{
-    e.preventDefault();
-    const t = e.touches[0];
-    setPointerFromClient(t.clientX, t.clientY);
-    pointer.pressed = true;
-    if(actx && actx.state==="suspended") actx.resume?.();
-  }, {passive:false});
-  canvas.addEventListener('touchmove', (e)=>{
-    e.preventDefault();
-    const t = e.touches[0];
-    setPointerFromClient(t.clientX, t.clientY);
-  }, {passive:false});
-  canvas.addEventListener('touchend', ()=> pointer.pressed = false);
-
-  window.addEventListener('keydown', (e)=>{
-    if(e.key.toLowerCase()==="r"){
-      if(running){ resetGame(); beep(520,0.05,"triangle",0.05); }
-    }
-  });
-
-  // ===== UI buttons =====
-  startBtn.addEventListener('click', ()=>{
-    overlay.style.display = "none";
-    resetGame();
-    beep(660,0.06,"triangle",0.06);
-  });
-
-  muteBtn.addEventListener('click', ()=>{
-    audioOn = !audioOn;
-    muteBtn.textContent = `音效：${audioOn ? "開" : "關"}`;
-    beep(380,0.05,"sine",0.03);
-  });
-
-  resetRankBtn.addEventListener('click', ()=>{
-    saveRank([]);
-    renderRank();
-    beep(320,0.06,"sine",0.03);
-  });
-
-  renderRank();
-
-  // ===== Main Loop =====
-  let last = performance.now();
-  function tick(now){
-    const dt = Math.min(0.033, (now - last)/1000);
-    last = now;
-
-    if(toastTimer > 0){
-      toastTimer -= dt;
-      if(toastTimer <= 0) toast.classList.remove("show");
-    }
-
-    if(running){
-      timeLeft -= dt;
-      if(timeLeft <= 0){
-        timeLeft = 0;
-        uiTime.textContent = "0";
-        endGame();
-      }else{
-        uiTime.textContent = String(Math.ceil(timeLeft));
-      }
-
-      // Hourly event check
-      const nowDate = new Date();
-      if (nowDate.getMinutes() === 0) {
-        const key = hourlyKey(nowDate);
-        if (key !== lastHourlyKey && nowDate.getSeconds() <= 10) {
-          lastHourlyKey = key;
-          if (Math.random() < 0.45) triggerHourlyEvent();
-        }
-      }
-      if(echoBoostTimer > 0) echoBoostTimer -= dt;
-
-      // net follow
-      const follow = 12;
-      net.x += (pointer.x - net.x) * (1 - Math.exp(-follow*dt));
-      net.y += (pointer.y - net.y) * (1 - Math.exp(-follow*dt));
-      net.x = clamp(net.x, 60, W-60);
-      net.y = clamp(net.y, 110, H-60);
-
-      if (!net.broken && net.cooldown <= 0) net.down = pointer.pressed;
-      if (net.cooldown > 0) net.cooldown -= dt;
-
-      // spawn shards
-      spawnTimer += dt;
-      if(spawnTimer >= 0.6){
-        spawnTimer = 0;
-        const alive = shards.filter(s => s.alive).length;
-        if(alive < 10) shards.push(makeShard());
-      }
-
-      // rare fish spawn
-      fishTimer += dt;
-      if(fishTimer >= 2){
-        fishTimer = 0;
-        if(!fish && Math.random() < 0.08){
-          fish = makeFish();
-          showToast("✨金魚驚喜出現！");
-          beep(880,0.08,"triangle",0.05);
-        }
-      }
-
-      // update shards
-      for(const s of shards){
-        if(!s.alive) continue;
-        s.tw += dt*5;
-
-        s.vx += Math.sin(s.tw)*18*dt;
-        s.vy += Math.cos(s.tw*0.9)*12*dt;
-
-        const sp = Math.hypot(s.vx,s.vy);
-        const maxSp = 175 * (s.type.speed || 1.0);
-        if(sp > maxSp){ s.vx *= maxSp/sp; s.vy *= maxSp/sp; }
-
-        s.x += s.vx*dt;
-        s.y += s.vy*dt;
-
-        if (s.x < 70) s.vx += 120*dt;
-        if (s.x > W-70) s.vx -= 120*dt;
-        if (s.y < 120) s.vy += 90*dt;
-        if (s.y > H-70) s.vy -= 90*dt;
-
-        s.x = clamp(s.x, 60, W-60);
-        s.y = clamp(s.y, 110, H-60);
-
-        if(net.down && !net.broken){
-          const d2 = dist2(net.x, net.y, s.x, s.y);
-          const fearR = 140;
-          if(d2 < fearR*fearR){
-            const d = Math.sqrt(d2) + 0.001;
-            const ax = (s.x - net.x)/d;
-            const ay = (s.y - net.y)/d;
-            const spd = (s.type.speed || 1.0);
-            s.vx += ax * 220 * dt * spd;
-            s.vy += ay * 160 * dt * spd;
-          }
-        }
-
-        if(net.down && !net.broken){
-          const hit = dist2(net.x, net.y, s.x, s.y) < (net.r + s.r - 6) ** 2;
-          if(hit) catchShard(s);
-        }
-      }
-
-      // update fish
-      if(fish && fish.alive){
-        fish.wiggle += dt*6;
-        fish.vx += Math.sin(fish.wiggle)*10*dt;
-        fish.vy += Math.cos(fish.wiggle*0.85)*8*dt;
-
-        const sp = Math.hypot(fish.vx, fish.vy);
-        const maxSp = 210;
-        if(sp > maxSp){ fish.vx *= maxSp/sp; fish.vy *= maxSp/sp; }
-
-        fish.x += fish.vx*dt;
-        fish.y += fish.vy*dt;
-
-        if (fish.x < 70) fish.vx += 160*dt;
-        if (fish.x > W-70) fish.vx -= 160*dt;
-        if (fish.y < 130) fish.vy += 120*dt;
-        if (fish.y > H-70) fish.vy -= 120*dt;
-
-        fish.x = clamp(fish.x, 60, W-60);
-        fish.y = clamp(fish.y, 120, H-60);
-
-        if(net.down && !net.broken){
-          const hit = dist2(net.x, net.y, fish.x, fish.y) < (net.r + fish.r - 4) ** 2;
-          if(hit) catchFish();
-        }
-      }
-
-      // pops
-      for(let i=pops.length-1;i>=0;i--){
-        const p = pops[i];
-        p.t -= dt;
-        p.y += p.vy*dt;
-        p.vy -= 10*dt;
-        if(p.t <= 0) pops.splice(i,1);
-      }
-
-      // broken handling
-      if(net.broken && net.cooldown <= 0){
-        net.broken = false;
-        net.durability = maxDurability;
-        setDurUI();
-        showToast("鹿鹿：換新網了，繼續撈。");
-        beep(520,0.05,"sine",0.04);
-      }
-    }
-
-    draw();
-    requestAnimationFrame(tick);
-  }
-
-  function catchShard(s){
-    s.alive = false;
-
-    score += s.type.score;
-    uiScore.textContent = score;
-    setTitleUI();
-
-    combo += 1;
-    maxCombo = Math.max(maxCombo, combo);
-    uiCombo.textContent = combo;
-
-    net.durability -= rand(s.type.dmg[0], s.type.dmg[1]);
-
-    spawnPop(s.x, s.y, `+${s.type.score}`);
-
-    if(s.type.key === "echo"){
-      const pool = [
-        "✨探索提示：回聲碎片在微微震動。",
-        "✨探索提示：裂縫訊號…增強了。",
-        "✨探索提示：系統反向標記風險上升 👀",
-        "✨探索提示：鹿鹿盯著天空裂縫看了一秒。"
-      ];
-      showToast(pool[(Math.random()*pool.length)|0]);
-      beep(740,0.07,"triangle",0.05);
-    } else if (s.type.key === "echo_hourly"){
-      const pool = [
-        "🕳️整點回聲：你感覺到水面下有「回應」。",
-        "📡整點回聲：訊號指向園區上空——別抬頭。",
-        "👀整點回聲：系統正在記錄鹿粉行為（保持自然）。"
-      ];
-      showToast(pool[(Math.random()*pool.length)|0]);
-      beep(920,0.09,"triangle",0.06);
-    } else {
-      beep(560,0.05,"triangle",0.04);
-    }
-
-    if(net.durability <= 0){ breakNet(); return; }
-    setDurUI();
-  }
-
-  function catchFish(){
-    fish.alive = false;
-    fish = null;
-
-    score += 5;
-    uiScore.textContent = score;
-    setTitleUI();
-
-    combo += 2;
-    maxCombo = Math.max(maxCombo, combo);
-    uiCombo.textContent = combo;
-
-    fishHits += 1;
-    uiFishCount.textContent = fishHits;
-
-    net.durability -= rand(14, 22);
-    spawnPop(net.x, net.y-10, "+5");
-
-    showToast("🎉撈到金魚！鹿鹿：運氣不錯。");
-    beep(980,0.09,"triangle",0.06);
-
-    if(net.durability <= 0){ breakNet(); return; }
-    setDurUI();
-  }
-
-  function breakNet(){
-    net.durability = 0;
-    setDurUI();
-    net.broken = true;
-    net.down = false;
-    net.cooldown = 1.2;
-    breaks += 1;
-    uiBreaks.textContent = breaks;
-
-    combo = 0;
-    uiCombo.textContent = combo;
-
-    showToast("鹿鹿：網子破了…別硬撐啦。");
-    beep(220,0.10,"sawtooth",0.03);
-  }
-
-  // ===== Draw =====
-  function draw(){
-    ctx.clearRect(0,0,W,H);
-    const t = performance.now()/1000;
-
-    // caustics
-    ctx.globalAlpha = 0.18;
-    for(let i=0;i<6;i++){
-      const x = W*(0.15 + i*0.14) + Math.sin(t*0.7 + i)*35;
-      const y = 140 + Math.cos(t*0.9 + i*1.2)*22;
-      ctx.beginPath();
-      ctx.ellipse(x,y, 180, 60, 0.2*Math.sin(t+i), 0, Math.PI*2);
-      ctx.fillStyle = "rgba(255,255,255,.9)";
-      ctx.fill();
-    }
-    ctx.globalAlpha = 1;
-
-    // ripples
-    ctx.globalAlpha = 0.22;
-    for(let i=0;i<7;i++){
-      ctx.beginPath();
-      const y = 110 + i*22 + Math.sin(t*1.2 + i)*5;
-      ctx.ellipse(W/2, y, W*0.46, 10, 0, 0, Math.PI*2);
-      ctx.strokeStyle = "rgba(255,255,255,.5)";
-      ctx.lineWidth = 1;
-      ctx.stroke();
-    }
-    ctx.globalAlpha = 1;
-
-    for(const s of shards){ if(s.alive) drawShard(s); }
-    if(fish && fish.alive) drawFish(fish);
-
-    for(const p of pops){
-      ctx.save();
-      ctx.globalAlpha = clamp(p.t/0.7, 0, 1);
-      ctx.font = "18px ui-sans-serif, system-ui";
-      ctx.fillStyle = "rgba(255,255,255,.92)";
-      ctx.strokeStyle = "rgba(10,18,32,.35)";
-      ctx.lineWidth = 3;
-      ctx.strokeText(p.text, p.x+2, p.y);
-      ctx.fillText(p.text, p.x+2, p.y);
-      ctx.restore();
-    }
-
-    drawNet();
-    drawLuluBadge();
-
-    ctx.globalAlpha = 0.10;
-    ctx.fillStyle = "rgba(0,0,0,.9)";
-    ctx.fillRect(0,0,W,14);
-    ctx.globalAlpha = 1;
-  }
-
-  function drawShard(s){
-    ctx.save();
-    ctx.translate(s.x, s.y);
-    const a = performance.now()/700 + s.tw;
-    ctx.rotate(a);
-
-    const isHourly = !!s.hourly;
-
-    ctx.globalAlpha = isHourly ? 0.75 : 0.55;
-    ctx.beginPath();
-    ctx.arc(0,0, s.r*(isHourly?2.5:2.1), 0, Math.PI*2);
-    ctx.fillStyle = s.type.glow;
-    ctx.fill();
-
-    ctx.globalAlpha = isHourly ? 0.36 : 0.22;
-    for(let i=0;i<4;i++){
-      const ang = (i/4)*Math.PI/2;
-      ctx.beginPath();
-      ctx.moveTo(Math.cos(ang)*s.r*2.1, Math.sin(ang)*s.r*2.1);
-      ctx.lineTo(Math.cos(ang)*s.r*(isHourly?3.6:3.0), Math.sin(ang)*s.r*(isHourly?3.6:3.0));
-      ctx.strokeStyle = "rgba(255,255,255,.85)";
-      ctx.lineWidth = isHourly ? 3 : 2;
-      ctx.stroke();
-    }
-
-    ctx.globalAlpha = 0.97;
-    ctx.beginPath();
-    ctx.moveTo(0, -s.r);
-    ctx.lineTo(s.r, 0);
-    ctx.lineTo(0, s.r);
-    ctx.lineTo(-s.r, 0);
-    ctx.closePath();
-    ctx.fillStyle = s.type.color;
-    ctx.fill();
-
-    ctx.globalAlpha = 0.7;
-    ctx.beginPath();
-    ctx.moveTo(0, -s.r*0.6);
-    ctx.lineTo(s.r*0.45, 0);
-    ctx.lineTo(0, s.r*0.6);
-    ctx.closePath();
-    ctx.fillStyle = "rgba(255,255,255,.88)";
-    ctx.fill();
-
-    if(isHourly){
-      ctx.globalAlpha = 0.85;
-      ctx.beginPath();
-      ctx.arc(0,0, s.r*1.35, 0, Math.PI*2);
-      ctx.strokeStyle = "rgba(255,255,255,.85)";
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-    }
-
-    ctx.restore();
-  }
-
-  function drawFish(f){
-    ctx.save();
-    ctx.translate(f.x, f.y);
-    const ang = Math.atan2(f.vy, f.vx);
-    ctx.rotate(ang);
-
-    ctx.globalAlpha = 0.35;
-    ctx.beginPath();
-    ctx.arc(0,0, f.r*2.2, 0, Math.PI*2);
-    ctx.fillStyle = "rgba(255,255,255,.85)";
-    ctx.fill();
-
-    ctx.globalAlpha = 0.95;
-    ctx.beginPath();
-    ctx.ellipse(0, 0, f.r*1.35, f.r*0.9, 0, 0, Math.PI*2);
-    ctx.fillStyle = "rgba(255,170,90,.98)";
-    ctx.fill();
-
-    ctx.beginPath();
-    ctx.moveTo(-f.r*1.25, 0);
-    ctx.quadraticCurveTo(-f.r*2.2, -f.r*0.75, -f.r*2.45, 0);
-    ctx.quadraticCurveTo(-f.r*2.2,  f.r*0.75, -f.r*1.25, 0);
-    ctx.fillStyle = "rgba(255,140,70,.98)";
-    ctx.fill();
-
-    ctx.globalAlpha = 0.55;
-    ctx.beginPath();
-    ctx.ellipse(-f.r*0.15, -f.r*0.55, f.r*0.65, f.r*0.25, 0.3, 0, Math.PI*2);
-    ctx.fillStyle = "rgba(255,230,210,.9)";
-    ctx.fill();
-
-    ctx.globalAlpha = 1;
-    ctx.beginPath();
-    ctx.arc(f.r*0.75, -f.r*0.15, 3.5, 0, Math.PI*2);
-    ctx.fillStyle = "rgba(20,20,20,.9)";
-    ctx.fill();
-
-    ctx.restore();
-  }
-
-  function drawNet(){
-    ctx.save();
-    ctx.translate(net.x, net.y);
-    const r = net.r + (net.down ? 6 : 0);
-
-    if(net.down){
-      ctx.globalAlpha = 0.14;
-      ctx.beginPath();
-      ctx.ellipse(8, 10, r*1.15, r*0.55, 0.2, 0, Math.PI*2);
-      ctx.fillStyle = "rgba(0,0,0,.9)";
-      ctx.fill();
-    }
-
-    ctx.globalAlpha = 1;
-    ctx.beginPath();
-    ctx.arc(0,0, r, 0, Math.PI*2);
-    ctx.strokeStyle = net.broken ? "rgba(255,120,120,.92)" : "rgba(255,255,255,.92)";
-    ctx.lineWidth = 3;
-    ctx.stroke();
-
-    ctx.globalAlpha = net.down ? 0.58 : 0.38;
-    const lines = 7;
-    for(let i=0;i<lines;i++){
-      const a = (i/lines)*Math.PI;
-      ctx.beginPath();
-      ctx.moveTo(Math.cos(a)*r, Math.sin(a)*r);
-      ctx.lineTo(Math.cos(a+Math.PI)*r, Math.sin(a+Math.PI)*r);
-      ctx.strokeStyle = "rgba(255,255,255,.86)";
-      ctx.lineWidth = 1;
-      ctx.stroke();
-    }
-    ctx.globalAlpha = 1;
-
-    const crack = 1 - net.durability/maxDurability;
-    if(crack > 0.22){
-      ctx.globalAlpha = clamp(crack, 0, 0.9);
-      for(let i=0;i<5;i++){
-        ctx.beginPath();
-        ctx.moveTo(rand(-10,10), rand(-10,10));
-        ctx.lineTo(rand(-r, r), rand(-r, r));
-        ctx.strokeStyle = "rgba(255,255,255,.85)";
-        ctx.lineWidth = 1;
-        ctx.stroke();
-      }
-      ctx.globalAlpha = 1;
-    }
-
-    ctx.restore();
-  }
-
-  function roundRectPath(x,y,w,h,r){
-    ctx.beginPath();
-    ctx.moveTo(x+r, y);
-    ctx.arcTo(x+w, y, x+w, y+h, r);
-    ctx.arcTo(x+w, y+h, x, y+h, r);
-    ctx.arcTo(x, y+h, x, y, r);
-    ctx.arcTo(x, y, x+w, y, r);
-    ctx.closePath();
-  }
-
-  function drawLuluBadge(){
-    const bx = 18, by = H-18;
-    ctx.save();
-    ctx.globalAlpha = 0.86;
-    roundRectPath(bx, by-96, 340, 78, 18);
-    ctx.fillStyle = "rgba(255,255,255,.55)";
-    ctx.fill();
-    ctx.globalAlpha = 1;
-
-    const gx = bx + 46, gy = by - 56;
-
-    // neck
-    ctx.beginPath();
-    if(ctx.roundRect){ ctx.roundRect(gx-10, gy+18, 22, 30, 10); }
-    else { ctx.rect(gx-10, gy+18, 22, 30); }
-    ctx.fillStyle = "rgba(255,220,165,.95)";
-    ctx.fill();
-
-    // face
-    ctx.beginPath();
-    ctx.arc(gx, gy, 18, 0, Math.PI*2);
-    ctx.fillStyle = "rgba(255,220,165,.98)";
-    ctx.fill();
-
-    // horns
-    ctx.beginPath();
-    ctx.arc(gx-10, gy-18, 5.2, 0, Math.PI*2);
-    ctx.arc(gx+10, gy-18, 5.2, 0, Math.PI*2);
-    ctx.fillStyle = "rgba(255,220,165,.95)";
-    ctx.fill();
-
-    // spots
-    ctx.globalAlpha = 0.92;
-    for(let i=0;i<4;i++){
-      ctx.beginPath();
-      ctx.arc(gx+(i-1.5)*6, gy+(i%2?4:-5), 3.2, 0, Math.PI*2);
-      ctx.fillStyle = "rgba(195,135,88,.75)";
-      ctx.fill();
-    }
-    ctx.globalAlpha = 1;
-
-    // eyes
-    ctx.beginPath();
-    ctx.arc(gx-6, gy-2, 2.2, 0, Math.PI*2);
-    ctx.arc(gx+6, gy-2, 2.2, 0, Math.PI*2);
-    ctx.fillStyle = "rgba(40,40,40,.9)";
-    ctx.fill();
-
-    // mouth
-    ctx.globalAlpha = 0.7;
-    ctx.beginPath();
-    ctx.arc(gx, gy+6, 6.5, 0, Math.PI);
-    ctx.strokeStyle = "rgba(40,40,40,.7)";
-    ctx.lineWidth = 2;
-    ctx.stroke();
-    ctx.globalAlpha = 1;
-
-    ctx.font = "14px ui-sans-serif, system-ui";
-    ctx.fillStyle = "rgba(10,18,32,.68)";
-
-    let line1 = "鹿鹿：碎片在飄，慢慢來。";
-    if(net.broken) line1 = "鹿鹿：網破了，等等換新。";
-    else if(net.down) line1 = "鹿鹿：就現在，下網！";
-    else if(echoBoostTimer > 0.2) line1 = "鹿鹿：整點訊號…回聲變多了。";
-
-    ctx.fillText(line1, bx+90, by-64);
-
-    ctx.font = "12px ui-sans-serif, system-ui";
-    ctx.fillStyle = "rgba(10,18,32,.55)";
-    const buffTxt = echoBoostTimer > 0.2 ? `整點回聲提升：${Math.ceil(echoBoostTimer)}s` : "提示：整點前 10 秒可能發布探索提示";
-    ctx.fillText(buffTxt, bx+90, by-42);
-
-    ctx.restore();
-  }
-
-  // ===== Start =====
-  overlay.style.display = "grid";
-  renderRank();
-  requestAnimationFrame(tick);
+/* ===== 改成你的 LIFF ID ===== */
+const LIFF_ID = "2008825801-LXHTWx5N";
+
+/* ===== LIFF ===== */
+(async()=>{
+ try{
+  await liff.init({liffId:LIFF_ID});
+  if(liff.isInClient()) document.getElementById("liffBar").style.display="block";
+ }catch(e){}
 })();
+
+/* ===== 時段設定 ===== */
+const FRENZY_START_H=12, FRENZY_END_H=14;
+const FISH_START_H=19, FISH_END_H=21;
+
+function isFrenzy(d){const h=d.getHours();return h>=FRENZY_START_H&&h<FRENZY_END_H}
+function isFishNight(d){const h=d.getHours();return h>=FISH_START_H&&h<FISH_END_H}
+
+/* ===== 音效 ===== */
+let actx=null,audioOn=true,nightBgm=null;
+function beep(f=440,d=0.05){
+ if(!audioOn)return;
+ if(!actx)actx=new AudioContext();
+ const o=actx.createOscillator(),g=actx.createGain();
+ o.frequency.value=f;g.gain.value=0.04;
+ o.connect(g);g.connect(actx.destination);
+ o.start();o.stop(actx.currentTime+d)
+}
+function nightBell(){
+ if(!audioOn)return;
+ if(!actx)actx=new AudioContext();
+ const o=actx.createOscillator(),g=actx.createGain();
+ o.frequency.value=880;g.gain.value=0.03;
+ o.connect(g);g.connect(actx.destination);
+ o.start();o.stop(actx.currentTime+0.6)
+}
+function startNightBgm(){
+ if(nightBgm||!audioOn)return;
+ if(!actx)actx=new AudioContext();
+ const o=actx.createOscillator(),g=actx.createGain();
+ o.frequency.value=110;g.gain.value=0.008;
+ o.connect(g);g.connect(actx.destination);
+ o.start();nightBgm={o,g}
+}
+function stopNightBgm(){
+ if(nightBgm){nightBgm.o.stop();nightBgm=null}
+}
+
+/* ===== 遊戲狀態 ===== */
+const c=document.getElementById("c"),ctx=c.getContext("2d");
+let score=0,time=60,running=false;
+let lastFish=false;
+
+function toast(t){
+ const el=document.getElementById("toast");
+ el.textContent=t;el.classList.add("show");
+ setTimeout(()=>el.classList.remove("show"),2500)
+}
+function titleFromScore(s){
+ if(s>60)return"熟練鹿粉";
+ if(s>30)return"見習鹿粉";
+ return"新手鹿粉"
+}
+function displayTitle(){
+ const base=titleFromScore(score);
+ return document.body.classList.contains("fish-night")
+  ? `夜間觀測員 · ${base}` : base
+}
+
+/* ===== 方向鎖定 ===== */
+const lock=document.getElementById("portraitLock");
+function isPortrait(){return innerHeight>innerWidth}
+function updateOrientation(){
+ lock.style.display=isPortrait()?"grid":"none"
+}
+window.addEventListener("resize",updateOrientation);
+updateOrientation();
+
+/* ===== 主流程 ===== */
+function start(){
+ if(isPortrait()){toast("🦒 請先橫向");return}
+ document.getElementById("overlay").style.display="none";
+ score=0;time=60;running=true
+}
+function loop(){
+ ctx.clearRect(0,0,1280,720);
+ const now=new Date();
+
+ if(isFishNight(now)){
+  document.body.classList.add("fish-night");
+  if(!lastFish){nightBell();startNightBgm();toast("🌙 鹿鹿低聲說：夜間系統已接管。")}
+  lastFish=true
+ }else{
+  document.body.classList.remove("fish-night");
+  if(lastFish)stopNightBgm();
+  lastFish=false
+ }
+
+ if(running){
+  score+=isFrenzy(now)?2:1;
+  time-=0.016;
+  if(time<=0){
+    running=false;
+    document.getElementById("overlay").style.display="grid";
+  }
+ }
+
+ ctx.fillStyle=document.body.classList.contains("fish-night")
+  ?"rgba(255,215,120,.8)":"rgba(255,255,255,.8)";
+ ctx.beginPath();
+ ctx.arc(Math.random()*1280,Math.random()*720,6,0,Math.PI*2);
+ ctx.fill();
+
+ document.getElementById("score").textContent=score;
+ document.getElementById("time").textContent=Math.ceil(time);
+ document.getElementById("title").textContent=displayTitle();
+
+ requestAnimationFrame(loop)
+}
+loop();
 </script>
 </body>
 </html>
-
