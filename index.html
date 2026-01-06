@@ -14,6 +14,7 @@
       --shadow: 0 18px 60px rgba(0,0,0,.35);
       --r: 18px;
     }
+
     html,body{
       height:100%;margin:0;
       background: radial-gradient(1200px 700px at 50% 20%, #1a325a 0%, #081225 55%, #050b16 100%);
@@ -25,6 +26,7 @@
       -webkit-text-size-adjust: 100%;
       text-size-adjust: 100%;
     }
+
     .wrap{height:100%; display:grid; place-items:center; padding:14px;}
     .frame{
       position:relative;
@@ -86,6 +88,14 @@
       border: 1px solid rgba(255,255,255,.4);
       backdrop-filter: blur(12px);
     }
+
+    /* ✅ 初次進入的玩法提示視窗縮小 0.75 */
+    .panel.tutorial-shrink{
+      transform: scale(0.75);
+      transform-origin: center center;
+      will-change: transform;
+    }
+
     .title{
       display:flex; align-items:center; justify-content:space-between; gap:12px;
     }
@@ -199,7 +209,7 @@
       100% { transform: translateY(0) scale(1);   filter: drop-shadow(0 0 0 rgba(255,255,255,.0)); }
     }
 
-    /* ✅ 直向鎖（預設隱藏，需要時才顯示） */
+    /* ✅ 直向鎖（預設隱藏；直向才顯示） */
     .portrait-lock{
       position:absolute; inset:0;
       z-index:55;
@@ -248,7 +258,7 @@
       .liffbar{ right: 10px; top: 10px; }
     }
 
-    /* ✅ 手機橫向高度很矮時：面板自動縮＋可捲 */
+    /* ✅ 手機橫向高度很矮時：面板自動縮＋可捲（避免 LINE 視窗過大） */
     @media (max-height: 520px){
       .panel{
         max-height: 82vh;
@@ -351,7 +361,7 @@
           <div>裂縫收集：<b id="score">0</b></div>
           <div>⏳ <b id="time">60</b>s</div>
         </div>
-        <div class="sub" id="modeText">模式：一般｜整點 100% 必觸發探索提示</div>
+        <div class="sub" id="modeText">模式：一般</div>
         <div class="pill">
           連擊：<b id="combo">0</b>
           金魚：<b id="fishCount">0</b>
@@ -378,7 +388,7 @@
           <div class="tag">最終整合版</div>
         </div>
 
-        <!-- ✅ 只保留玩法（精簡） -->
+        <!-- ✅ 玩法提示（精簡） -->
         <div class="desc">
           <b>玩法</b>：移動網子，<b>按住</b>下網撈起碎片/金魚得分。<br/>
           網子有耐久，歸零會破網並自動換新；<b>60 秒</b>結算。<br/>
@@ -476,6 +486,7 @@
   const modeText = document.getElementById('modeText');
 
   const overlay = document.getElementById('overlay');
+  const panel = overlay.querySelector(".panel");
   const startBtn = document.getElementById('startBtn');
   const muteBtn = document.getElementById('muteBtn');
   const resetRankBtn = document.getElementById('resetRankBtn');
@@ -559,20 +570,21 @@
   }
 
   // ===== 時段 =====
-  const FRENZY_START_H = 12, FRENZY_END_H = 14;  // 裂縫暴走
-  const FISH_START_H = 19,   FISH_END_H   = 21;  // 金魚之夜
+  const FRENZY_START_H = 12, FRENZY_END_H = 14;  // 裂縫暴走：每天12:00-14:00
+  const FISH_START_H = 19,   FISH_END_H   = 21;  // 金魚之夜：每天19:00-21:00
 
   function isFrenzy(d){ const h=d.getHours(); return h>=FRENZY_START_H && h<FRENZY_END_H; }
   function isFishNight(d){ const h=d.getHours(); return h>=FISH_START_H && h<FISH_END_H; }
 
+  // ✅ 依你要求：裂縫暴走移除「速度不變」字樣；金魚之夜不顯示括弧整段
   function updateModeUI(d){
-    let mode="一般", extra="整點 100% 必觸發探索提示";
-    if(isFishNight(d)){ mode="金魚之夜"; extra="夜間金色主題・金魚更常出現"; }
-    else if(isFrenzy(d)){ mode="裂縫暴走"; extra="碎片密度↑・得分倍率↑（速度不變）"; }
-    modeText.textContent = `模式：${mode}｜${extra}`;
+    let mode="一般", extra="";
+    if(isFishNight(d)){ mode="金魚之夜"; extra=""; }
+    else if(isFrenzy(d)){ mode="裂縫暴走"; extra="碎片密度↑・得分倍率↑"; }
+    modeText.textContent = extra ? `模式：${mode}｜${extra}` : `模式：${mode}`;
   }
 
-  // ===== 整點 100% 探索提示 =====
+  // ===== 整點 100% 探索提示（仍保留機制，但不在 UI 文案描述）=====
   let lastHourlyStamp = "";
   function hourlyStamp(d){
     return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}-${d.getHours()}`;
@@ -587,7 +599,7 @@
   ];
   let echoBoostTimer = 0;
 
-  // ===== 排行榜（只保留今天，降低累積 lag） =====
+  // ===== 排行榜（只保留今天） =====
   const LS_KEY = "lulu_rank_today_v1";
 
   function todayKeyLocal(){
@@ -649,7 +661,6 @@
   const pointer = { x: W*0.5, y: H*0.55, pressed:false };
   const net = { x:pointer.x, y:pointer.y, r:38, down:false, durability:maxDurability, broken:false, cooldown:0 };
 
-  // 類型
   const shardTypes = [
     { key:"stardust", name:"星屑", score:1, dmg:[4,7],  rarity:0.70, color:"rgba(255,244,198,.95)", glow:"rgba(255,255,255,.75)" },
     { key:"prism",    name:"棱晶", score:2, dmg:[7,12], rarity:0.23, color:"rgba(222,210,255,.95)", glow:"rgba(210,255,250,.55)" },
@@ -676,7 +687,7 @@
   // ✅ 統一標準速度（慢速好瞄準）
   function makeShard(){
     const t = pickShardType();
-    const baseSp = rand(24, 36); // 初速
+    const baseSp = rand(24, 36);
     const ang = rand(0, Math.PI*2);
     return {
       kind:"shard",
@@ -796,6 +807,9 @@
     resultText.innerHTML = `結算：<b>${score}</b> 分｜破網 <b>${breaks}</b> 次｜最高連擊 <b>${maxCombo}</b>｜金魚 <b>${fishHits}</b>｜稱號：<b>${displayTitle(score)}</b>${night ? " <b>🌙</b>" : ""}`;
     overlay.style.display="grid";
 
+    // ✅ 結算 overlay 不縮小
+    panel.classList.remove("tutorial-shrink");
+
     // ✅ 結算後顯示快速開始
     quickStart.style.display = "block";
   }
@@ -808,7 +822,7 @@
     showToast(msg + "\n✨整點回聲碎片已刷新！");
   }
 
-  // ===== 唯一加分入口 =====
+  // ===== 唯一加分入口（修正分數自增） =====
   function catchShard(s, nowDate){
     s.alive=false;
 
@@ -992,7 +1006,7 @@
         uiTime.textContent = String(Math.ceil(timeLeft));
       }
 
-      // 整點 100% 必觸發
+      // ✅ 整點必觸發（不再在 UI 文案中描述）
       if (nowDate.getMinutes() === 0) {
         const stamp = hourlyStamp(nowDate);
         if (stamp !== lastHourlyStamp) {
@@ -1012,7 +1026,7 @@
       if(!net.broken && net.cooldown<=0) net.down = pointer.pressed;
       if(net.cooldown>0) net.cooldown -= dt;
 
-      // spawn shards（暴走：密度↑；速度不變）
+      // spawn shards（暴走：密度↑；速度不變已從文案移除；實作仍維持速度）
       spawnTimer += dt;
       const frenzy = isFrenzy(nowDate);
       const spawnEvery = frenzy ? 0.42 : 0.60;
@@ -1287,17 +1301,19 @@
   // ===== 初始顯示 =====
   renderRank();
 
-  // ✅ 第一次顯示教學；之後只留快速開始
+  // ✅ 第一次顯示教學（並縮小 0.75）；之後只留快速開始
   let seen = false;
   try { seen = localStorage.getItem(LS_TUTORIAL_SEEN) === "1"; } catch(_) {}
 
   if (seen) {
     overlay.style.display = "none";
     quickStart.style.display = "block";
+    panel.classList.remove("tutorial-shrink");
     showToast("⚡ 點右下角「快速開始」即可開局");
   } else {
     overlay.style.display = "grid";
     quickStart.style.display = "none";
+    panel.classList.add("tutorial-shrink");
   }
 
   // ===== 主迴圈 =====
