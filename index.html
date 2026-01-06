@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>裂縫水池：鹿粉撈撈祭（柔和Q版BGM）</title>
+  <title>裂縫水池：鹿粉撈撈祭（休閒輕音樂版）</title>
 
   <style>
     :root{
@@ -587,7 +587,7 @@
     o.stop(t0 + 0.18);
   }
 
-  // ===== 免付費環境 BGM（柔和 Q 版輕音樂：音樂盒/木琴感，不煩躁）=====
+  // ===== 免付費環境 BGM（休閒輕音樂：明亮、輕鬆、不沉悶）=====
   let freeBgm = null;
   function midiToFreq(m){ return 440 * Math.pow(2, (m-69)/12); }
 
@@ -595,81 +595,131 @@
     if(!audioOn || freeBgm) return;
     try{
       ensureAudio();
+
       const master = actx.createGain();
-      master.gain.value = 0.0065; // ✅ 更小聲
+      master.gain.value = 0.0078; // ✅ 輕鬆但不吵
       master.connect(actx.destination);
 
       const lp = actx.createBiquadFilter();
       lp.type = "lowpass";
-      lp.frequency.value = 1400;  // ✅ 柔化高頻
-      lp.Q.value = 0.65;
+      lp.frequency.value = 2400;
+      lp.Q.value = 0.55;
       lp.connect(master);
 
-      const bassGain = actx.createGain();
-      bassGain.gain.value = 0.55;
-      bassGain.connect(lp);
+      const stereo = actx.createStereoPanner();
+      stereo.pan.value = 0;
+      stereo.connect(lp);
 
-      const leadGain = actx.createGain();
-      leadGain.gain.value = 1.0;
-      leadGain.connect(lp);
+      const arpBus = actx.createGain(); arpBus.gain.value = 0.85; arpBus.connect(stereo);
+      const leadBus = actx.createGain(); leadBus.gain.value = 0.75; leadBus.connect(stereo);
 
-      const scale = [60, 62, 64, 67, 69, 72, 74]; // C D E G A C D
-      const bassNotes = [48, 55, 52, 55];         // C2 G2 E2 G2
+      const prog = [
+        [60, 64, 67], // C
+        [67, 71, 74], // G
+        [69, 72, 76], // Am
+        [65, 69, 72], // F
+      ];
+      const scale = [60, 62, 64, 67, 69, 72]; // C D E G A C
 
+      const bpm = 108;
+      const stepSec = 60 / bpm / 2;
       let step = 0;
-      let beatMs = 520; // ✅ 慢一點更耐聽
-      let breathing = 0;
 
-      function softPluck(freq, dur=0.18, type="triangle", gainBus=leadGain, bright=1100){
+      function pluck({freq, dur=0.12, type="triangle", bus=arpBus, bright=2600, gain=0.9, pan=0}){
         const t0 = actx.currentTime;
         const o = actx.createOscillator();
         const g = actx.createGain();
         const f = actx.createBiquadFilter();
+        const p = actx.createStereoPanner();
 
         o.type = type;
         o.frequency.setValueAtTime(freq, t0);
 
         f.type = "lowpass";
         f.frequency.setValueAtTime(bright, t0);
-        f.Q.value = 0.75;
+        f.Q.value = 0.7;
+
+        p.pan.value = pan;
 
         g.gain.setValueAtTime(0.0001, t0);
-        g.gain.exponentialRampToValueAtTime(0.9, t0 + 0.01);
+        g.gain.exponentialRampToValueAtTime(gain, t0 + 0.008);
         g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
 
-        o.connect(f); f.connect(g); g.connect(gainBus);
+        o.connect(f); f.connect(g); g.connect(p); p.connect(bus);
         o.start(t0);
         o.stop(t0 + dur + 0.02);
       }
 
-      function playTick(){
-        if(!audioOn || !freeBgm) return;
+      function softKick(){
+        const t0 = actx.currentTime;
+        const o = actx.createOscillator();
+        const g = actx.createGain();
+        const f = actx.createBiquadFilter();
 
-        breathing = (breathing + 1) % 8;
-        const breath = 0.92 + (breathing === 0 ? 0.08 : 0.0);
-        master.gain.value = 0.0065 * breath;
+        o.type = "sine";
+        o.frequency.setValueAtTime(120, t0);
+        o.frequency.exponentialRampToValueAtTime(55, t0 + 0.08);
 
-        const r = Math.random();
-        const isRest = r < 0.20; // ✅ 留白避免疲勞
-        if(!isRest){
-          const idx = (step + (Math.random() < 0.35 ? 1 : 0)) % scale.length;
-          const note = scale[idx];
-          const octave = (Math.random() < 0.12) ? 12 : 0;
-          softPluck(midiToFreq(note + octave), 0.16, "triangle", leadGain, 1100);
-        }
+        f.type = "lowpass";
+        f.frequency.setValueAtTime(300, t0);
+        f.Q.value = 1.0;
 
-        if(step % 4 === 0){
-          const bn = bassNotes[(step/4) % bassNotes.length];
-          softPluck(midiToFreq(bn), 0.22, "sine", bassGain, 650);
-        }
+        g.gain.setValueAtTime(0.0001, t0);
+        g.gain.exponentialRampToValueAtTime(0.022, t0 + 0.01);
+        g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.10);
 
-        const drift = (Math.random() - 0.5) * 26; // 微小自然漂移
-        step++;
-        freeBgm.timer = setTimeout(playTick, Math.max(440, beatMs + drift));
+        o.connect(f); f.connect(g); g.connect(stereo);
+        o.start(t0);
+        o.stop(t0 + 0.12);
       }
 
-      freeBgm = { master, lp, bassGain, leadGain, timer:null };
-      playTick();
+      function tick(){
+        if(!audioOn || !freeBgm) return;
+
+        const bar = Math.floor(step / 16);
+        const chord = prog[bar % prog.length];
+
+        const arpPattern = [0, 2, 1, 2, 0, 2, 1, 2];
+        const idx = arpPattern[step % arpPattern.length];
+        const base = chord[idx];
+
+        const pan = ((step % 8) - 3.5) / 10;
+        const octave = (step % 8 === 4 && Math.random() < 0.55) ? 12 : 0;
+
+        pluck({
+          freq: midiToFreq(base + octave),
+          dur: 0.11,
+          type: "triangle",
+          bus: arpBus,
+          bright: 2600,
+          gain: 0.78,
+          pan
+        });
+
+        if(step % 4 === 2 && Math.random() < 0.65){
+          const s = scale[(Math.random() * scale.length) | 0];
+          const jump = (Math.random() < 0.18) ? 12 : 0;
+          pluck({
+            freq: midiToFreq(s + jump),
+            dur: 0.14,
+            type: "sine",
+            bus: leadBus,
+            bright: 3200,
+            gain: 0.55,
+            pan: -pan * 0.6
+          });
+        }
+
+        if(step % 4 === 0 && Math.random() < 0.85){
+          softKick();
+        }
+
+        step++;
+        freeBgm.timer = setTimeout(tick, Math.round(stepSec * 1000));
+      }
+
+      freeBgm = { master, lp, stereo, arpBus, leadBus, timer:null };
+      tick();
     }catch(_){}
   }
 
@@ -678,14 +728,14 @@
     try{
       if(freeBgm.timer) clearTimeout(freeBgm.timer);
       const t0 = actx.currentTime;
-      freeBgm.master.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.25);
-      setTimeout(()=>{ freeBgm = null; }, 280);
+      freeBgm.master.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.18);
+      setTimeout(()=>{ freeBgm = null; }, 220);
     }catch(_){
       freeBgm = null;
     }
   }
 
-  // 🌙 夜間音（保留）
+  // 🌙 夜間音
   function nightBell(){
     if(!audioOn) return;
     try{
@@ -930,7 +980,7 @@
 
     quickStart.style.display = "none";
 
-    // ✅ 遊戲中播放「柔和Q版輕音樂」環境BGM
+    // ✅ 遊戲中播放「休閒輕音樂」環境BGM
     startFreeBgm();
 
     showToast("鹿鹿：碎片就交給你了。");
@@ -1090,6 +1140,8 @@
     if(!audioOn){
       stopNightBgm();
       stopFreeBgm();
+    }else if(running){
+      startFreeBgm();
     }
     muteBtn.textContent = `音效：${audioOn ? "開" : "關"}`;
     bubblePopCombo(0, 460);
@@ -1121,7 +1173,7 @@
     const nowDate = new Date();
     updateModeUI(nowDate);
 
-    // 🌙 夜間進出
+    // 🌙 夜間進出（保留原夜間提示＋夜鈴＋夜間極輕環境音）
     const nowFish = isFishNight(nowDate);
     if(nowFish){
       document.body.classList.add("fish-night");
@@ -1147,6 +1199,7 @@
         uiTime.textContent = String(Math.ceil(timeLeft));
       }
 
+      // 整點觸發
       if (nowDate.getMinutes() === 0) {
         const stamp = hourlyStamp(nowDate);
         if (stamp !== lastHourlyStamp) {
@@ -1156,6 +1209,7 @@
       }
       if(echoBoostTimer>0) echoBoostTimer -= dt;
 
+      // net follow
       const follow = 12;
       net.x += (pointer.x - net.x) * (1 - Math.exp(-follow*dt));
       net.y += (pointer.y - net.y) * (1 - Math.exp(-follow*dt));
@@ -1165,7 +1219,7 @@
       if(!net.broken && net.cooldown<=0) net.down = pointer.pressed;
       if(net.cooldown>0) net.cooldown -= dt;
 
-      // spawn shards（暴走：密度↑）
+      // spawn shards（暴走：密度↑；速度不變）
       spawnTimer += dt;
       const frenzy = isFrenzy(nowDate);
       const spawnEvery = frenzy ? 0.42 : 0.60;
@@ -1216,6 +1270,7 @@
         s.x = clamp(s.x, 60, W-60);
         s.y = clamp(s.y, 110, H-60);
 
+        // 微躲（更好瞄準）
         if(net.down && !net.broken){
           const d2 = dist2(net.x, net.y, s.x, s.y);
           const fearR = 140;
@@ -1228,6 +1283,7 @@
           }
         }
 
+        // catch
         if(net.down && !net.broken){
           const hit = dist2(net.x, net.y, s.x, s.y) < (net.r + s.r - 6) ** 2;
           if(hit) catchShard(s, nowDate);
