@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>裂縫水池：鹿粉撈撈祭（最終整合版）</title>
+  <title>裂縫水池：鹿粉撈撈祭（泡泡音效＋免付費BGM）</title>
 
   <style>
     :root{
@@ -21,8 +21,6 @@
       color:var(--white);
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
       overflow:hidden;
-
-      /* ✅ LINE/iOS 文字自動放大修正 */
       -webkit-text-size-adjust: 100%;
       text-size-adjust: 100%;
     }
@@ -88,17 +86,14 @@
       border: 1px solid rgba(255,255,255,.4);
       backdrop-filter: blur(12px);
     }
-
-    /* ✅ 初次進入的玩法提示視窗縮小 0.75 */
+    /* ✅ 玩法視窗縮小 0.75 */
     .panel.tutorial-shrink{
       transform: scale(0.75);
       transform-origin: center center;
       will-change: transform;
     }
 
-    .title{
-      display:flex; align-items:center; justify-content:space-between; gap:12px;
-    }
+    .title{display:flex; align-items:center; justify-content:space-between; gap:12px;}
     h1{margin:0; font-size: 22px; letter-spacing: .2px;}
     .tag{font-size: 12px; color: var(--ink2); background: rgba(10,18,32,.08); padding:6px 10px; border-radius:999px;}
     .desc{margin: 10px 0 14px; color: var(--ink2); line-height: 1.6; font-size: 14px;}
@@ -209,7 +204,6 @@
       100% { transform: translateY(0) scale(1);   filter: drop-shadow(0 0 0 rgba(255,255,255,.0)); }
     }
 
-    /* ✅ 直向鎖（預設隱藏；直向才顯示） */
     .portrait-lock{
       position:absolute; inset:0;
       z-index:55;
@@ -258,27 +252,21 @@
       .liffbar{ right: 10px; top: 10px; }
     }
 
-    /* ✅ 手機橫向高度很矮時：面板自動縮＋可捲（避免 LINE 視窗過大） */
     @media (max-height: 520px){
-      .panel{
-        max-height: 82vh;
-        overflow: auto;
-        padding: 14px 14px 12px;
-      }
+      .panel{ max-height: 82vh; overflow: auto; padding: 14px 14px 12px; }
       h1{ font-size: 18px; }
       .desc{ font-size: 13px; line-height: 1.55; margin: 8px 0 10px; }
       .btns{ margin-top: 10px; }
       button{ padding: 10px 12px; border-radius: 14px; }
     }
 
-    /* 🌙 金魚之夜主題（更溫潤圓角 + 金色結算） */
+    /* 🌙 金魚之夜主題 */
     body.fish-night .frame{
       background: radial-gradient(circle at 50% 25%, rgba(255,235,190,.95) 0%, rgba(255,179,71,.92) 30%, rgba(140,70,0,.86) 62%, rgba(25,10,0,.95) 100%);
     }
     body.fish-night .card{ border-radius: 22px; }
     body.fish-night .panel{ border-radius: 28px; }
     body.fish-night button{ border-radius: 22px; }
-
     body.fish-night .panel{
       background: linear-gradient(180deg, rgba(255,240,200,.96), rgba(255,215,140,.92));
       box-shadow: 0 20px 60px rgba(120,70,0,.35), inset 0 0 0 1px rgba(255,255,255,.55);
@@ -286,18 +274,6 @@
     body.fish-night .panel h1{ color:#6a3b00; text-shadow: 0 0 10px rgba(255,210,120,.6); }
     body.fish-night .panel b{ color:#8a4b00; }
 
-    body.fish-night .portrait-lock{
-      background: radial-gradient(circle at 50% 40%, rgba(255,215,120,.55), rgba(120,60,0,.75));
-    }
-    body.fish-night .portrait-lock__content{
-      color: #fff6cc;
-      text-shadow: 0 0 12px rgba(255,220,140,.85), 0 0 28px rgba(255,180,80,.65);
-    }
-    body.fish-night .rotate-icon{
-      filter: drop-shadow(0 0 18px rgba(255,200,120,.9));
-    }
-
-    /* ⚡ 快速開始浮動按鈕 */
     .quick-start{
       position: fixed;
       right: 16px;
@@ -350,7 +326,6 @@
 
     <canvas id="c" width="1280" height="720"></canvas>
 
-    <!-- ⚡ 快速開始（看過教學後才顯示） -->
     <div class="quick-start" id="quickStart">
       <button>⚡ 快速開始</button>
     </div>
@@ -388,7 +363,6 @@
           <div class="tag">最終整合版</div>
         </div>
 
-        <!-- ✅ 玩法提示（精簡） -->
         <div class="desc">
           <b>玩法</b>：移動網子，<b>按住</b>下網撈起碎片/金魚得分。<br/>
           網子有耐久，歸零會破網並自動換新；<b>60 秒</b>結算。<br/>
@@ -418,8 +392,6 @@
 (() => {
   // ✅✅✅ 只改這一行：填入你的 LIFF ID（不是整段 LIFF URL）
   const LIFF_ID = "2008825801-LXHTWx5N";
-
-  // ✅ 教學只顯示一次
   const LS_TUTORIAL_SEEN = "lulu_tutorial_seen_v1";
 
   // ===== LIFF =====
@@ -430,9 +402,7 @@
     if(!window.liff || !LIFF_ID || LIFF_ID.includes("PASTE_")) return;
     try{
       await liff.init({ liffId: LIFF_ID });
-      if (liff.isInClient && liff.isInClient()) {
-        liffBar.classList.remove('hidden');
-      }
+      if (liff.isInClient && liff.isInClient()) liffBar.classList.remove('hidden');
       closeBtn.addEventListener('click', ()=>{
         if (liff.isInClient && liff.isInClient()) liff.closeWindow();
       });
@@ -445,15 +415,12 @@
   // ===== 橫向鎖定 + 直向禁止開始 =====
   const rotateHint = document.getElementById("rotateHint");
   const portraitLock = document.getElementById("portraitLock");
-
   function isPortrait(){ return window.innerHeight > window.innerWidth; }
-
   async function tryLockLandscape(){
     if (screen.orientation && screen.orientation.lock) {
       try { await screen.orientation.lock("landscape"); } catch(_) {}
     }
   }
-
   function updateOrientationUI(){
     if (isPortrait()) {
       portraitLock.style.display = "grid";
@@ -463,7 +430,6 @@
       rotateHint.style.display = "none";
     }
   }
-
   tryLockLandscape();
   updateOrientationUI();
   window.addEventListener("resize", updateOrientationUI);
@@ -503,212 +469,219 @@
   // ===== Audio Core =====
   let audioOn = true;
   let actx = null;
-
   function ensureAudio(){
     if(!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
     if(actx && actx.state === "suspended") actx.resume?.();
   }
-
-  // ========= 8-bit Q彈音效（方波/短包絡/小滑音）=========
   function audioOk(){
     if(!audioOn) return false;
-    try { ensureAudio(); return true; } catch(_) { return false; }
+    try{ ensureAudio(); return true; }catch(_){ return false; }
   }
 
-  function makeGainADSR(g, t0, a=0.004, d=0.05, s=0.0001, r=0.02, peak=0.06){
-    g.gain.setValueAtTime(0.0001, t0);
-    g.gain.exponentialRampToValueAtTime(Math.max(peak, 0.0002), t0 + a);
-    g.gain.exponentialRampToValueAtTime(Math.max(peak*0.45, 0.0002), t0 + a + d);
-    g.gain.exponentialRampToValueAtTime(Math.max(s, 0.0001), t0 + a + d + r);
+  // ===== 泡泡啵啵（連擊升音高，但音量受控不吵）=====
+  let sfxCooldown = 0;
+  const SFX_COOLDOWN_MIN = 0.028;
+  const SFX_GAIN_CAP = 0.040;  // ✅ 最大不超過這個
+  const SFX_GAIN_BASE = 0.018; // ✅ 基本音量（越小越安靜）
+
+  function stepSfxCooldown(dt){
+    if(sfxCooldown > 0) sfxCooldown -= dt;
+  }
+  function popPitchFromCombo(combo){
+    const c = Math.min(30, Math.max(0, combo|0));
+    return 1.0 + (c/30) * 0.55; // 1.00 ~ 1.55
   }
 
-  // 8-bit「Q彈啵」：抓碎片/按鈕用
-  function bitPop(freq=740, gain=0.055){
+  function bubblePopCombo(combo, base=520){
     if(!audioOk()) return;
+    if(sfxCooldown > 0) return;
+    sfxCooldown = SFX_COOLDOWN_MIN;
+
     const t0 = actx.currentTime;
+    const pitch = popPitchFromCombo(combo);
+
+    const freqHi = base * 1.18 * pitch;
+    const freqLo = base * 0.82 * pitch;
 
     const o = actx.createOscillator();
     const g = actx.createGain();
-    const f = actx.createBiquadFilter();
+    const lp = actx.createBiquadFilter();
 
-    o.type = "square";
-    o.frequency.setValueAtTime(freq*1.25, t0);
-    o.frequency.exponentialRampToValueAtTime(freq*0.92, t0 + 0.07);
+    o.type = "sine";
+    o.frequency.setValueAtTime(freqHi, t0);
+    o.frequency.exponentialRampToValueAtTime(freqLo, t0 + 0.09);
 
-    f.type = "lowpass";
-    f.frequency.setValueAtTime(2200, t0);
-    f.Q.value = 0.7;
+    lp.type = "lowpass";
+    lp.frequency.setValueAtTime(1600 + (combo|0)*10, t0);
+    lp.Q.value = 0.7;
 
-    makeGainADSR(g, t0, 0.003, 0.03, 0.00012, 0.035, gain);
+    const gain = Math.min(SFX_GAIN_CAP, SFX_GAIN_BASE);
 
-    o.connect(f); f.connect(g); g.connect(actx.destination);
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(gain, t0 + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.11);
+
+    o.connect(lp); lp.connect(g); g.connect(actx.destination);
     o.start(t0);
-    o.stop(t0 + 0.11);
+    o.stop(t0 + 0.13);
   }
 
-  // 8-bit「叮叮」：回聲/金魚/開始成功用
-  function bitDing(gain=0.06){
+  function bubbleDingCombo(combo){
     if(!audioOk()) return;
+    if(sfxCooldown > 0) return;
+    sfxCooldown = Math.max(sfxCooldown, 0.04);
+
+    const t0 = actx.currentTime;
+
+    const pitch = popPitchFromCombo(combo);
+    const gain = Math.min(SFX_GAIN_CAP, SFX_GAIN_BASE + 0.006);
+
+    const o = actx.createOscillator();
+    const g = actx.createGain();
+    const lp = actx.createBiquadFilter();
+
+    o.type = "triangle";
+
+    const f1 = 640 * pitch;
+    const f2 = 920 * pitch;
+
+    o.frequency.setValueAtTime(f1, t0);
+    o.frequency.setValueAtTime(f2, t0 + 0.08);
+
+    lp.type = "lowpass";
+    lp.frequency.setValueAtTime(2400, t0);
+    lp.Q.value = 0.6;
+
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(gain, t0 + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.18);
+
+    o.connect(lp); lp.connect(g); g.connect(actx.destination);
+    o.start(t0);
+    o.stop(t0 + 0.20);
+
+    setTimeout(()=> { bubblePopCombo(combo, 700); }, 90);
+  }
+
+  function bubbleThud(){
+    if(!audioOk()) return;
+    if(sfxCooldown > 0) return;
+    sfxCooldown = Math.max(sfxCooldown, 0.06);
+
     const t0 = actx.currentTime;
 
     const o = actx.createOscillator();
     const g = actx.createGain();
-    const f = actx.createBiquadFilter();
+    const lp = actx.createBiquadFilter();
 
-    o.type = "square";
-    f.type = "lowpass";
-    f.frequency.setValueAtTime(2600, t0);
-    f.Q.value = 0.6;
+    o.type = "sine";
+    o.frequency.setValueAtTime(200, t0);
+    o.frequency.exponentialRampToValueAtTime(120, t0 + 0.12);
 
+    lp.type = "lowpass";
+    lp.frequency.setValueAtTime(700, t0);
+    lp.Q.value = 0.9;
+
+    const gain = Math.min(SFX_GAIN_CAP, 0.032);
     g.gain.setValueAtTime(0.0001, t0);
-    g.gain.exponentialRampToValueAtTime(gain, t0 + 0.004);
+    g.gain.exponentialRampToValueAtTime(gain, t0 + 0.01);
     g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.16);
 
-    o.frequency.setValueAtTime(784, t0);         // G5
-    o.frequency.setValueAtTime(1046.5, t0+0.08); // C6
-
-    o.connect(f); f.connect(g); g.connect(actx.destination);
+    o.connect(lp); lp.connect(g); g.connect(actx.destination);
     o.start(t0);
     o.stop(t0 + 0.18);
   }
 
-  // 8-bit「噗」：破網用
-  function bitThud(){
-    if(!audioOk()) return;
-    const t0 = actx.currentTime;
-
-    const o = actx.createOscillator();
-    const g = actx.createGain();
-    const f = actx.createBiquadFilter();
-
-    o.type = "square";
-    o.frequency.setValueAtTime(220, t0);
-    o.frequency.exponentialRampToValueAtTime(110, t0 + 0.10);
-
-    f.type = "lowpass";
-    f.frequency.setValueAtTime(900, t0);
-    f.Q.value = 0.9;
-
-    g.gain.setValueAtTime(0.0001, t0);
-    g.gain.exponentialRampToValueAtTime(0.07, t0 + 0.006);
-    g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.14);
-
-    o.connect(f); f.connect(g); g.connect(actx.destination);
-    o.start(t0);
-    o.stop(t0 + 0.16);
-  }
-
-  // 小顆粒（更街機）
-  function bitTick(gain=0.02){
-    if(!audioOk()) return;
-    const t0 = actx.currentTime;
-
-    const buf = actx.createBuffer(1, actx.sampleRate * 0.02, actx.sampleRate);
-    const data = buf.getChannelData(0);
-    for(let i=0;i<data.length;i++){
-      data[i] = (Math.random()*2-1) * Math.exp(-i/(data.length/6));
-    }
-    const src = actx.createBufferSource();
-    const g = actx.createGain();
-    const f = actx.createBiquadFilter();
-
-    src.buffer = buf;
-    f.type="highpass";
-    f.frequency.value = 1200;
-
-    g.gain.setValueAtTime(0.0001, t0);
-    g.gain.exponentialRampToValueAtTime(gain, t0 + 0.002);
-    g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.03);
-
-    src.connect(f); f.connect(g); g.connect(actx.destination);
-    src.start(t0);
-  }
-
-  // ========= 8-bit 環境音樂（遊戲進行中）=========
-  let bgm = null;
-
-  function startBgm8bit(){
-    if(!audioOn || bgm) return;
+  // ===== 免付費環境 BGM（WebAudio 合成，不用音檔）=====
+  let freeBgm = null;
+  function startFreeBgm(){
+    if(!audioOn || freeBgm) return;
     try{
       ensureAudio();
       const t0 = actx.currentTime;
 
-      const o1 = actx.createOscillator();
-      const o2 = actx.createOscillator();
-      const gPad = actx.createGain();
+      const pad = actx.createOscillator();
+      const sub = actx.createOscillator();
+      const g = actx.createGain();
       const lp = actx.createBiquadFilter();
 
-      o1.type = "square";
-      o2.type = "square";
+      pad.type = "triangle";
+      sub.type = "sine";
 
-      // C 小和弦：C4 + E4（超輕）
-      o1.frequency.value = 261.63;
-      o2.frequency.value = 329.63;
+      pad.frequency.setValueAtTime(220, t0);
+      sub.frequency.setValueAtTime(110, t0);
 
       lp.type = "lowpass";
-      lp.frequency.value = 1200;
+      lp.frequency.setValueAtTime(900, t0);
       lp.Q.value = 0.7;
 
-      gPad.gain.setValueAtTime(0.0001, t0);
-      gPad.gain.exponentialRampToValueAtTime(0.006, t0 + 0.8);
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(0.012, t0 + 0.9);
 
-      o1.connect(lp); o2.connect(lp);
-      lp.connect(gPad); gPad.connect(actx.destination);
+      const lfo = actx.createOscillator();
+      const lfoG = actx.createGain();
+      lfo.type = "sine";
+      lfo.frequency.value = 0.12;
+      lfoG.gain.value = 12;
+      lfo.connect(lfoG);
+      lfoG.connect(pad.frequency);
 
-      o1.start(); o2.start();
+      pad.connect(lp);
+      sub.connect(lp);
+      lp.connect(g);
+      g.connect(actx.destination);
 
-      let step = 0;
-      const tempo = 92; // bpm
-      const interval = 60/tempo/2; // 8th
+      pad.start();
+      sub.start();
+      lfo.start();
+
+      let tick = 0;
       const timer = setInterval(()=>{
-        if(!audioOn || !bgm) return;
-        if(step % 2 === 0) bitPop(420 + (step%8===0?120:0), 0.02);
-        step++;
-      }, interval*1000);
+        if(!audioOn || !freeBgm) return;
+        tick++;
+        if(tick % 6 === 0){
+          bubblePopCombo(0, 520 + (Math.random()*140|0)); // 環境水滴很淡，不吃 combo
+        }
+      }, 800);
 
-      bgm = { o1,o2,gPad,timer };
+      freeBgm = { pad, sub, lfo, g, timer };
     }catch(_){}
   }
 
-  function stopBgm8bit(){
-    if(!bgm) return;
+  function stopFreeBgm(){
+    if(!freeBgm) return;
     try{
-      clearInterval(bgm.timer);
+      clearInterval(freeBgm.timer);
       const t0 = actx.currentTime;
-      bgm.gPad.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.25);
+      freeBgm.g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.25);
       setTimeout(()=>{
-        try{ bgm.o1.stop(); }catch(_){}
-        try{ bgm.o2.stop(); }catch(_){}
-        bgm = null;
+        try{ freeBgm.pad.stop(); }catch(_){}
+        try{ freeBgm.sub.stop(); }catch(_){}
+        try{ freeBgm.lfo.stop(); }catch(_){}
+        freeBgm = null;
       }, 300);
     }catch(_){
-      bgm = null;
+      freeBgm = null;
     }
   }
 
-  // 🌙 夜間輕鈴（保留）
+  // 🌙 夜間音（保留）
   function nightBell(){
     if(!audioOn) return;
     try{
       ensureAudio();
       const o = actx.createOscillator();
       const g = actx.createGain();
-
       o.type = "sine";
       o.frequency.setValueAtTime(880, actx.currentTime);
       o.frequency.exponentialRampToValueAtTime(1320, actx.currentTime + 0.25);
-
       g.gain.setValueAtTime(0.0001, actx.currentTime);
       g.gain.exponentialRampToValueAtTime(0.035, actx.currentTime + 0.05);
       g.gain.exponentialRampToValueAtTime(0.0001, actx.currentTime + 0.6);
-
       o.connect(g); g.connect(actx.destination);
-      o.start();
-      o.stop(actx.currentTime + 0.65);
+      o.start(); o.stop(actx.currentTime + 0.65);
     }catch(_){}
   }
-
-  // 🌙 夜間環境音（極輕）
   let nightBgm = null;
   function startNightBgm(){
     if(!audioOn || nightBgm) return;
@@ -732,13 +705,11 @@
   }
 
   // ===== 時段 =====
-  const FRENZY_START_H = 12, FRENZY_END_H = 14;  // 裂縫暴走：每天12:00-14:00
-  const FISH_START_H = 19,   FISH_END_H   = 21;  // 金魚之夜：每天19:00-21:00
-
+  const FRENZY_START_H = 12, FRENZY_END_H = 14;
+  const FISH_START_H = 19,   FISH_END_H   = 21;
   function isFrenzy(d){ const h=d.getHours(); return h>=FRENZY_START_H && h<FRENZY_END_H; }
   function isFishNight(d){ const h=d.getHours(); return h>=FISH_START_H && h<FISH_END_H; }
 
-  // ✅ 依你要求：裂縫暴走移除「速度不變」字樣；金魚之夜不顯示括弧整段
   function updateModeUI(d){
     let mode="一般", extra="";
     if(isFishNight(d)){ mode="金魚之夜"; extra=""; }
@@ -746,7 +717,7 @@
     modeText.textContent = extra ? `模式：${mode}｜${extra}` : `模式：${mode}`;
   }
 
-  // ===== 整點必觸發（機制保留；不在玩法視窗說明）=====
+  // ===== 整點事件 =====
   let lastHourlyStamp = "";
   function hourlyStamp(d){
     return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}-${d.getHours()}`;
@@ -763,18 +734,15 @@
 
   // ===== 排行榜（只保留今天） =====
   const LS_KEY = "lulu_rank_today_v1";
-
   function todayKeyLocal(){
     const d = new Date();
     const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,"0"), day=String(d.getDate()).padStart(2,"0");
     return `${y}-${m}-${day}`;
   }
-
   function pruneToToday(arr){
     const today = todayKeyLocal();
     return (arr || []).filter(x => x && x.dayKey === today);
   }
-
   function loadRank(){
     try{
       const raw = localStorage.getItem(LS_KEY);
@@ -782,11 +750,9 @@
       return pruneToToday(Array.isArray(arr) ? arr : []);
     }catch(_){ return []; }
   }
-
   function saveRank(arr){
     try{ localStorage.setItem(LS_KEY, JSON.stringify(pruneToToday(arr).slice(0,40))); }catch(_){}
   }
-
   function renderRank(){
     const arr = loadRank().slice(0,5);
     rankList.innerHTML = "";
@@ -815,7 +781,6 @@
   const maxDurability = 100;
   const GAME_SECONDS = 60;
 
-  // ✅ 分數只在 catchShard/catchFish 內加
   let running=false, timeLeft=GAME_SECONDS, score=0;
   let combo=0, maxCombo=0, breaks=0, fishHits=0;
   let lastFishNight=false;
@@ -846,7 +811,6 @@
     return shardTypes[0];
   }
 
-  // ✅ 統一標準速度（慢速好瞄準）
   function makeShard(){
     const t = pickShardType();
     const baseSp = rand(24, 36);
@@ -906,7 +870,6 @@
     if(s >= 28)  return "見習鹿粉";
     return "新手鹿粉";
   }
-
   function displayTitle(s){
     const base = titleFromScore(s);
     return document.body.classList.contains("fish-night") ? `夜間觀測員 · ${base}` : base;
@@ -947,26 +910,19 @@
 
     quickStart.style.display = "none";
 
-    // ✅ 遊戲中啟動 8-bit 環境音樂
-    startBgm8bit();
+    // ✅ 遊戲中播放免付費環境BGM
+    startFreeBgm();
 
     showToast("鹿鹿：碎片就交給你了。");
   }
 
   function endGame(){
     running=false;
-
-    // ✅ 結算停 BGM
-    stopBgm8bit();
+    stopFreeBgm();
 
     const night = document.body.classList.contains("fish-night");
     const arr = loadRank();
-    arr.push({
-      dayKey: todayKeyLocal(),
-      score, breaks, maxCombo, fishHits,
-      night,
-      ts: Date.now()
-    });
+    arr.push({ dayKey: todayKeyLocal(), score, breaks, maxCombo, fishHits, night, ts: Date.now() });
     arr.sort((a,b)=> b.score-a.score || a.breaks-b.breaks || b.maxCombo-a.maxCombo);
     saveRank(arr);
     renderRank();
@@ -982,11 +938,10 @@
     const msg = hourlyHintPool[(Math.random()*hourlyHintPool.length)|0];
     echoBoostTimer = 12;
     shards.push(makeHourlyEchoShard());
-    bitDing(0.055);
+    bubbleDingCombo(combo);
     showToast(msg + "\n✨整點回聲碎片已刷新！");
   }
 
-  // ===== 唯一加分入口 =====
   function catchShard(s, nowDate){
     s.alive=false;
 
@@ -1003,13 +958,11 @@
     net.durability -= rand(s.type.dmg[0], s.type.dmg[1]);
     spawnPop(s.x, s.y, `+${add}`);
 
-    // ✅ 8-bit Q彈音效
     if(s.type.key==="echo" || s.type.key==="echo_hourly"){
       showToast("✨探索提示：你撈到了一段不穩定的回聲。");
-      bitDing(0.055);
+      bubbleDingCombo(combo);
     }else{
-      bitPop(720, 0.05);
-      bitTick(0.015);
+      bubblePopCombo(combo, 520 + Math.random()*90);
     }
 
     if(net.durability<=0){ breakNet(); return; }
@@ -1038,7 +991,7 @@
     spawnPop(net.x, net.y-10, `+${add}`);
 
     showToast(isFishNight(nowDate) ? "🌙撈到夜金魚！鹿鹿：今晚很旺。" : "🎉撈到金魚！鹿鹿：運氣不錯。");
-    bitDing(0.07);
+    bubbleDingCombo(combo);
 
     if(net.durability<=0){ breakNet(); return; }
     setDurUI();
@@ -1058,7 +1011,7 @@
     uiCombo.textContent=combo;
 
     showToast("鹿鹿：網子破了…別硬撐啦。");
-    bitThud();
+    bubbleThud();
   }
 
   // ===== Input =====
@@ -1091,7 +1044,7 @@
 
   window.addEventListener('keydown', (e)=>{
     if(e.key.toLowerCase()==="r"){
-      if(running){ resetGame(); bitPop(760, 0.045); }
+      if(running){ resetGame(); bubblePopCombo(0, 620); }
     }
   });
 
@@ -1102,13 +1055,10 @@
       showToast("🦒 鹿鹿：先橫向！裂縫方向會扭曲視界。");
       return;
     }
-
-    // ✅ 成功開始即視為看過教學
     try { localStorage.setItem(LS_TUTORIAL_SEEN, "1"); } catch(_) {}
-
     overlay.style.display="none";
     resetGame();
-    bitPop(780, 0.05);
+    bubblePopCombo(0, 680);
     tryLockLandscape();
   }
 
@@ -1117,15 +1067,18 @@
 
   muteBtn.addEventListener('click', ()=>{
     audioOn = !audioOn;
-    if(!audioOn) { stopNightBgm(); stopBgm8bit(); }
+    if(!audioOn){
+      stopNightBgm();
+      stopFreeBgm();
+    }
     muteBtn.textContent = `音效：${audioOn ? "開" : "關"}`;
-    bitPop(520, 0.03);
+    bubblePopCombo(0, 460);
   });
 
   resetRankBtn.addEventListener('click', ()=>{
-    saveRank([]); // 只清今天
+    saveRank([]);
     renderRank();
-    bitPop(520, 0.03);
+    bubblePopCombo(0, 420);
   });
 
   // ===== Spawn pacing =====
@@ -1138,6 +1091,8 @@
     const dt = Math.min(0.033, (now - last)/1000);
     last = now;
 
+    stepSfxCooldown(dt); // ✅ 每幀扣冷卻，避免吵
+
     if(toastTimer>0){
       toastTimer -= dt;
       if(toastTimer<=0) toast.classList.remove("show");
@@ -1146,7 +1101,7 @@
     const nowDate = new Date();
     updateModeUI(nowDate);
 
-    // 🌙 夜間進出（一次）
+    // 🌙 夜間進出
     const nowFish = isFishNight(nowDate);
     if(nowFish){
       document.body.classList.add("fish-night");
@@ -1172,7 +1127,6 @@
         uiTime.textContent = String(Math.ceil(timeLeft));
       }
 
-      // ✅ 整點必觸發
       if (nowDate.getMinutes() === 0) {
         const stamp = hourlyStamp(nowDate);
         if (stamp !== lastHourlyStamp) {
@@ -1182,7 +1136,6 @@
       }
       if(echoBoostTimer>0) echoBoostTimer -= dt;
 
-      // net follow
       const follow = 12;
       net.x += (pointer.x - net.x) * (1 - Math.exp(-follow*dt));
       net.y += (pointer.y - net.y) * (1 - Math.exp(-follow*dt));
@@ -1215,7 +1168,7 @@
           if(Math.random() < p){
             fish = makeFish();
             showToast(nowFish ? "🌙金魚之夜：金色游影出沒！" : "✨金魚驚喜出現！");
-            bitPop(880, 0.04);
+            bubblePopCombo(Math.min(combo, 10), 760);
           }
         }
       }
@@ -1243,7 +1196,6 @@
         s.x = clamp(s.x, 60, W-60);
         s.y = clamp(s.y, 110, H-60);
 
-        // 微躲（好瞄準）
         if(net.down && !net.broken){
           const d2 = dist2(net.x, net.y, s.x, s.y);
           const fearR = 140;
@@ -1256,7 +1208,6 @@
           }
         }
 
-        // catch
         if(net.down && !net.broken){
           const hit = dist2(net.x, net.y, s.x, s.y) < (net.r + s.r - 6) ** 2;
           if(hit) catchShard(s, nowDate);
@@ -1305,7 +1256,7 @@
         net.durability=maxDurability;
         setDurUI();
         showToast("鹿鹿：換新網了，繼續撈。");
-        bitPop(620, 0.04);
+        bubblePopCombo(0, 560);
       }
     }
 
@@ -1461,7 +1412,6 @@
   // ===== 初始顯示 =====
   renderRank();
 
-  // ✅ 第一次顯示教學（縮小 0.75）；之後只留快速開始
   let seen = false;
   try { seen = localStorage.getItem(LS_TUTORIAL_SEEN) === "1"; } catch(_) {}
 
