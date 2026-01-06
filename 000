@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>裂縫水池：鹿粉撈撈祭</title>
+
+<style>
+/* ===== 基本色系 ===== */
+:root{
+  --pool:#2aa6ff;
+  --hud:rgba(255,255,255,.65);
+  --ink:#0a1220;
+}
+body{
+  margin:0;
+  height:100vh;
+  background:radial-gradient(1200px 700px at 50% 20%,#1a325a,#081225);
+  font-family:system-ui,"Noto Sans TC","Microsoft JhengHei";
+  overflow:hidden;
+}
+.wrap{height:100%;display:grid;place-items:center;}
+.frame{
+  position:relative;
+  width:100vw;
+  height:100dvh;
+  background:radial-gradient(circle at 50% 25%,#a7f3ff,var(--pool),#063254);
+}
+canvas{width:100%;height:100%;display:block}
+
+/* ===== HUD ===== */
+.hud{
+  position:absolute;top:12px;left:12px;right:12px;
+  display:flex;gap:8px;flex-wrap:wrap;z-index:5
+}
+.card{
+  background:var(--hud);
+  border-radius:16px;
+  padding:8px 12px;
+  color:var(--ink);
+  flex:1;
+  min-width:140px;
+}
+
+/* ===== Overlay ===== */
+.overlay{
+  position:absolute;inset:0;
+  background:#0007;
+  display:grid;place-items:center;
+  z-index:10
+}
+.panel{
+  background:#fff;
+  border-radius:22px;
+  padding:18px;
+  max-width:90%;
+  color:#111;
+}
+
+/* ===== Buttons ===== */
+button{
+  padding:10px 14px;
+  border-radius:18px;
+  border:none;
+  background:#111;
+  color:#fff;
+  font-weight:800;
+  cursor:pointer;
+}
+
+/* ===== Toast ===== */
+.toast{
+  position:absolute;top:90px;left:12px;right:12px;
+  background:#fff9;
+  border-radius:16px;
+  padding:10px 12px;
+  opacity:0;
+  transition:.25s;
+  z-index:20
+}
+.toast.show{opacity:1}
+
+/* ===== LIFF ===== */
+.liffbar{
+  position:absolute;top:12px;right:12px;z-index:30
+}
+.liffbar button{
+  background:#000a;color:#fff
+}
+
+/* ===== 直向鎖定遮罩 ===== */
+.portrait-lock{
+  position:absolute;inset:0;
+  display:none;
+  backdrop-filter:blur(10px);
+  background:rgba(0,0,0,.5);
+  place-items:center;
+  z-index:50
+}
+.portrait-lock__content{
+  text-align:center;
+  color:#fff;
+  font-weight:900
+}
+.rotate-icon{
+  font-size:64px;
+  margin-bottom:12px;
+  animation:rotatePhone 1.4s infinite
+}
+@keyframes rotatePhone{
+  0%{transform:rotate(0)}
+  25%{transform:rotate(-20deg)}
+  50%{transform:rotate(0)}
+  75%{transform:rotate(20deg)}
+  100%{transform:rotate(0)}
+}
+
+/* ===== 夜間（金魚之夜）樣式 ===== */
+body.fish-night{
+  --pool:#ffb347;
+  --hud:rgba(255,245,210,.78);
+}
+body.fish-night .card{border-radius:24px}
+body.fish-night .panel{
+  background:linear-gradient(180deg,#fff0c8,#ffd78c);
+  border-radius:30px
+}
+body.fish-night .panel h2{color:#6a3b00}
+</style>
+</head>
+
+<body>
+<div class="wrap">
+<div class="frame">
+
+<div class="liffbar" id="liffBar" style="display:none">
+  <button onclick="liff.closeWindow()">關閉</button>
+</div>
+
+<canvas id="c" width="1280" height="720"></canvas>
+
+<div class="hud">
+  <div class="card">分數：<b id="score">0</b></div>
+  <div class="card">時間：<b id="time">60</b>s</div>
+  <div class="card">稱號：<b id="title">新手鹿粉</b></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="overlay" id="overlay">
+  <div class="panel">
+    <h2>🌌 裂縫水池：鹿粉撈撈祭</h2>
+    <p>
+      ⚡ 裂縫暴走：12:00–14:00<br/>
+      🌙 金魚之夜：19:00–21:00
+    </p>
+    <button onclick="start()">開始遊戲</button>
+  </div>
+</div>
+
+<div id="portraitLock" class="portrait-lock">
+  <div class="portrait-lock__content">
+    <div class="rotate-icon">🔄</div>
+    🦒 請橫向遊玩
+  </div>
+</div>
+
+</div>
+</div>
+
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<script>
+/* ===== 改成你的 LIFF ID ===== */
+const LIFF_ID = "2008825801-LXHTWx5N";
+
+/* ===== LIFF ===== */
+(async()=>{
+ try{
+  await liff.init({liffId:LIFF_ID});
+  if(liff.isInClient()) document.getElementById("liffBar").style.display="block";
+ }catch(e){}
+})();
+
+/* ===== 時段設定 ===== */
+const FRENZY_START_H=12, FRENZY_END_H=14;
+const FISH_START_H=19, FISH_END_H=21;
+
+function isFrenzy(d){const h=d.getHours();return h>=FRENZY_START_H&&h<FRENZY_END_H}
+function isFishNight(d){const h=d.getHours();return h>=FISH_START_H&&h<FISH_END_H}
+
+/* ===== 音效 ===== */
+let actx=null,audioOn=true,nightBgm=null;
+function beep(f=440,d=0.05){
+ if(!audioOn)return;
+ if(!actx)actx=new AudioContext();
+ const o=actx.createOscillator(),g=actx.createGain();
+ o.frequency.value=f;g.gain.value=0.04;
+ o.connect(g);g.connect(actx.destination);
+ o.start();o.stop(actx.currentTime+d)
+}
+function nightBell(){
+ if(!audioOn)return;
+ if(!actx)actx=new AudioContext();
+ const o=actx.createOscillator(),g=actx.createGain();
+ o.frequency.value=880;g.gain.value=0.03;
+ o.connect(g);g.connect(actx.destination);
+ o.start();o.stop(actx.currentTime+0.6)
+}
+function startNightBgm(){
+ if(nightBgm||!audioOn)return;
+ if(!actx)actx=new AudioContext();
+ const o=actx.createOscillator(),g=actx.createGain();
+ o.frequency.value=110;g.gain.value=0.008;
+ o.connect(g);g.connect(actx.destination);
+ o.start();nightBgm={o,g}
+}
+function stopNightBgm(){
+ if(nightBgm){nightBgm.o.stop();nightBgm=null}
+}
+
+/* ===== 遊戲狀態 ===== */
+const c=document.getElementById("c"),ctx=c.getContext("2d");
+let score=0,time=60,running=false;
+let lastFish=false;
+
+function toast(t){
+ const el=document.getElementById("toast");
+ el.textContent=t;el.classList.add("show");
+ setTimeout(()=>el.classList.remove("show"),2500)
+}
+function titleFromScore(s){
+ if(s>60)return"熟練鹿粉";
+ if(s>30)return"見習鹿粉";
+ return"新手鹿粉"
+}
+function displayTitle(){
+ const base=titleFromScore(score);
+ return document.body.classList.contains("fish-night")
+  ? `夜間觀測員 · ${base}` : base
+}
+
+/* ===== 方向鎖定 ===== */
+const lock=document.getElementById("portraitLock");
+function isPortrait(){return innerHeight>innerWidth}
+function updateOrientation(){
+ lock.style.display=isPortrait()?"grid":"none"
+}
+window.addEventListener("resize",updateOrientation);
+updateOrientation();
+
+/* ===== 主流程 ===== */
+function start(){
+ if(isPortrait()){toast("🦒 請先橫向");return}
+ document.getElementById("overlay").style.display="none";
+ score=0;time=60;running=true
+}
+function loop(){
+ ctx.clearRect(0,0,1280,720);
+ const now=new Date();
+
+ if(isFishNight(now)){
+  document.body.classList.add("fish-night");
+  if(!lastFish){nightBell();startNightBgm();toast("🌙 鹿鹿低聲說：夜間系統已接管。")}
+  lastFish=true
+ }else{
+  document.body.classList.remove("fish-night");
+  if(lastFish)stopNightBgm();
+  lastFish=false
+ }
+
+ if(running){
+  score+=isFrenzy(now)?2:1;
+  time-=0.016;
+  if(time<=0){
+    running=false;
+    document.getElementById("overlay").style.display="grid";
+  }
+ }
+
+ ctx.fillStyle=document.body.classList.contains("fish-night")
+  ?"rgba(255,215,120,.8)":"rgba(255,255,255,.8)";
+ ctx.beginPath();
+ ctx.arc(Math.random()*1280,Math.random()*720,6,0,Math.PI*2);
+ ctx.fill();
+
+ document.getElementById("score").textContent=score;
+ document.getElementById("time").textContent=Math.ceil(time);
+ document.getElementById("title").textContent=displayTitle();
+
+ requestAnimationFrame(loop)
+}
+loop();
+</script>
+</body>
+</html>
