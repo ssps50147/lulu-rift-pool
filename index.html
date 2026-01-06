@@ -34,7 +34,6 @@
     }
     canvas{width:100%; height:100%; display:block; touch-action:none;}
 
-    /* HUD */
     .hud{
       position:absolute; inset:14px 14px auto 14px;
       display:flex; gap:12px; align-items:stretch; flex-wrap:wrap;
@@ -67,7 +66,6 @@
       flex-wrap:wrap;
     }
 
-    /* Overlay */
     .overlay{
       position:absolute; inset:0;
       display:grid; place-items:center;
@@ -126,7 +124,6 @@
       border: 1px solid rgba(10,18,32,.10);
     }
 
-    /* Toast */
     .toast{
       position:absolute; left: 16px; top: 86px;
       background: rgba(255,255,255,.72);
@@ -145,7 +142,6 @@
     }
     .toast.show{opacity:1; transform: translateY(0);}
 
-    /* LIFF */
     .liffbar{
       position:absolute;
       right: 14px;
@@ -166,7 +162,6 @@
     }
     .hidden{display:none !important;}
 
-    /* ===== 橫向提示（脈動） ===== */
     .rotate-hint{
       position:absolute;
       left:0; right:0; top:0;
@@ -201,7 +196,6 @@
       100% { transform: translateY(0) scale(1);   filter: drop-shadow(0 0 0 rgba(255,255,255,.0)); }
     }
 
-    /* ===== 直向硬核鎖定（模糊 + 旋轉動畫） ===== */
     .portrait-lock{
       position:absolute;
       inset:0;
@@ -235,7 +229,6 @@
       100%{transform:rotate(0deg)}
     }
 
-    /* ===== 手機直向/小螢幕優化 ===== */
     @media (max-width: 640px), (max-aspect-ratio: 3/4) {
       .wrap { padding: 0; }
       .frame{
@@ -253,7 +246,7 @@
       .liffbar{ right: 10px; top: 10px; }
     }
 
-    /* ===== 🌙 金魚之夜：整體主題 + UI 圓角更溫潤 ===== */
+    /* 🌙 金魚之夜主題 */
     body.fish-night .frame{
       background: radial-gradient(circle at 50% 25%, rgba(255,235,190,.95) 0%, rgba(255,179,71,.92) 30%, rgba(140,70,0,.86) 62%, rgba(25,10,0,.95) 100%);
     }
@@ -261,7 +254,6 @@
     body.fish-night .panel{ border-radius: 28px; }
     body.fish-night button{ border-radius: 22px; }
 
-    /* 🌙 夜間結算（金色） */
     body.fish-night .panel{
       background: linear-gradient(180deg, rgba(255,240,200,.96), rgba(255,215,140,.92));
       box-shadow: 0 20px 60px rgba(120,70,0,.35), inset 0 0 0 1px rgba(255,255,255,.55);
@@ -269,7 +261,6 @@
     body.fish-night .panel h1{ color:#6a3b00; text-shadow: 0 0 10px rgba(255,210,120,.6); }
     body.fish-night .panel b{ color:#8a4b00; }
 
-    /* 🌙 夜間：直向鎖定金色版本 */
     body.fish-night .portrait-lock{
       background: radial-gradient(circle at 50% 40%, rgba(255,215,120,.55), rgba(120,60,0,.75));
     }
@@ -286,7 +277,6 @@
 <body>
 <div class="wrap">
   <div class="frame">
-    <!-- 橫向提示（直向時顯示） -->
     <div id="rotateHint" class="rotate-hint" aria-live="polite">
       <div class="rotate-hint__inner">
         🦒 鹿鹿提醒：裂縫方向不穩定<br/>
@@ -295,7 +285,6 @@
       </div>
     </div>
 
-    <!-- 直向硬核遮罩 -->
     <div id="portraitLock" class="portrait-lock" aria-hidden="true">
       <div class="portrait-lock__content">
         <div class="rotate-icon">🔄</div>
@@ -305,7 +294,6 @@
       </div>
     </div>
 
-    <!-- 只在 LINE App 內顯示 -->
     <div class="liffbar hidden" id="liffBar">
       <button id="closeBtn" title="關閉 LIFF 視窗">關閉</button>
     </div>
@@ -342,13 +330,13 @@
       <div class="panel" role="dialog" aria-modal="true">
         <div class="title">
           <h1>🌌 裂縫水池：鹿粉撈撈祭</h1>
-          <div class="tag">最終整合版</div>
+          <div class="tag">已修正分數自增</div>
         </div>
         <div class="desc">
-          你是鹿粉！撈起「微光碎片」收集線索。<br/>
-          <b>整點 100% 必觸發</b>：每到 <b>xx:00</b> 會發布「整點探索提示」並刷新 <b>整點回聲碎片</b>。<br/>
-          <b>金魚之夜</b>：每天 <b>19:00–21:00</b>（夜間金色主題＋輕鈴＋環境音）。<br/>
-          <b>裂縫暴走</b>：每天 <b>12:00–14:00</b>（更刺激，但碎片速度已統一校準、更好瞄準）。
+          只有「真的撈到」碎片/金魚才會加分。<br/>
+          <b>整點 100% 必觸發探索提示</b>：每到 <b>xx:00</b> 發布提示並刷新「整點回聲碎片」。<br/>
+          <b>金魚之夜</b>：每天 <b>19:00–21:00</b>（金色主題＋輕鈴＋環境音＋🌙排行標記＋夜間稱號）。<br/>
+          <b>裂縫暴走</b>：每天 <b>12:00–14:00</b>（得分加成，不加速；碎片速度統一校準更好瞄準）。
         </div>
 
         <div class="rank">
@@ -376,10 +364,10 @@
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <script>
 (() => {
-  // ✅✅✅ 只改這一行：填入你的 LIFF ID（不是整個網址）
+  // ✅ 只改這一行：填入你的 LIFF ID
   const LIFF_ID = "2008825801-LXHTWx5N";
 
-  // ===== LIFF: 偵測是否在 LINE 內開啟，才顯示關閉按鈕 =====
+  // ===== LIFF =====
   const liffBar = document.getElementById('liffBar');
   const closeBtn = document.getElementById('closeBtn');
 
@@ -399,7 +387,7 @@
   }
   initLiffAndUi();
 
-  // ===== 橫向鎖定 + 直向禁止開始 =====
+  // ===== 橫向鎖定 =====
   const rotateHint = document.getElementById("rotateHint");
   const portraitLock = document.getElementById("portraitLock");
 
@@ -479,30 +467,23 @@
     }catch(_){}
   }
 
-  // 🌙 夜間輕鈴
   function nightBell(){
     if(!audioOn) return;
     try{
       ensureAudio();
       const o = actx.createOscillator();
       const g = actx.createGain();
-
       o.type = "sine";
       o.frequency.setValueAtTime(880, actx.currentTime);
       o.frequency.exponentialRampToValueAtTime(1320, actx.currentTime + 0.25);
-
       g.gain.setValueAtTime(0.0001, actx.currentTime);
       g.gain.exponentialRampToValueAtTime(0.035, actx.currentTime + 0.05);
       g.gain.exponentialRampToValueAtTime(0.0001, actx.currentTime + 0.6);
-
-      o.connect(g);
-      g.connect(actx.destination);
-      o.start();
-      o.stop(actx.currentTime + 0.65);
-    }catch(e){}
+      o.connect(g); g.connect(actx.destination);
+      o.start(); o.stop(actx.currentTime + 0.65);
+    }catch(_){}
   }
 
-  // 🌙 夜間環境 BGM（極輕）
   let nightBgm = null;
   function startNightBgm(){
     if(!audioOn || nightBgm) return;
@@ -526,7 +507,7 @@
   }
 
   // ===== Leaderboard =====
-  const LS_KEY = "lulu_rift_pool_rank_final_v1";
+  const LS_KEY = "lulu_rift_pool_rank_final_v2_fixScore";
   function loadRank(){
     try{
       const raw = localStorage.getItem(LS_KEY);
@@ -561,12 +542,9 @@
     toastTimer = 3.0;
   }
 
-  // ===== 活動系統（固定你的要求時間） =====
-  // 金魚之夜：19:00 - 21:00
+  // ===== 時段 =====
   const FISH_NIGHT_START_H = 19;
   const FISH_NIGHT_END_H   = 21;
-
-  // 裂縫暴走：12:00 - 14:00
   const FRENZY_START_H = 12;
   const FRENZY_END_H   = 14;
 
@@ -579,25 +557,18 @@
     return h >= FRENZY_START_H && h < FRENZY_END_H;
   }
 
-  function currentMode(d){
-    if(isFrenzy(d)) return "裂縫暴走";
-    if(isFishNight(d)) return "金魚之夜";
-    return "一般";
-  }
-
   function updateModeUI(d){
-    const mode = currentMode(d);
+    let mode = "一般";
     let extra = "整點 100% 必觸發探索提示";
-    if(mode === "金魚之夜") extra = "夜間金色主題・金魚更常出現";
-    if(mode === "裂縫暴走") extra = "更密更刺激（但速度已校準好瞄準）";
+    if(isFishNight(d)){ mode="金魚之夜"; extra="夜間金色主題・金魚更常出現"; }
+    else if(isFrenzy(d)){ mode="裂縫暴走"; extra="得分加成（不加速，已校準好瞄準）"; }
     modeText.textContent = `模式：${mode}｜${extra}`;
   }
 
-  // 整點事件：100% 必觸發（每個整點只觸發一次）
+  // 整點事件
   let lastHourlyStamp = "";
   function hourlyStamp(d){
-    const y=d.getFullYear(), m=d.getMonth()+1, day=d.getDate(), h=d.getHours();
-    return `${y}-${m}-${day}-${h}`;
+    return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}-${d.getHours()}`;
   }
   const hourlyHintPool = [
     "🕳️ 整點探索提示\n裂縫在呼吸。碎片會更靠近水面。",
@@ -607,10 +578,79 @@
     "🌌 整點探索提示\n鹿鹿抬頭看了一秒：『來了。』",
     "📡 整點探索提示\n你聽到極輕的嗡鳴聲——不要抬頭。"
   ];
-
   let echoBoostTimer = 0;
+
+  // ===== Game State =====
+  const maxDurability = 100;
+  const GAME_SECONDS = 60;
+
+  let running = false;
+  let timeLeft = GAME_SECONDS;
+
+  // ✅✅✅ 重要：分數只在 catchShard/catchFish 裡加
+  let score = 0;
+
+  let combo = 0;
+  let maxCombo = 0;
+  let breaks = 0;
+  let fishHits = 0;
+
+  let lastFishNight = false;
+
+  const pointer = { x: W*0.5, y: H*0.55, pressed: false };
+  const net = {
+    x: pointer.x, y: pointer.y,
+    r: 38,
+    down: false,
+    durability: maxDurability,
+    broken: false,
+    cooldown: 0
+  };
+
+  const shardTypes = [
+    { key:"stardust", name:"星屑", score:1, dmg:[4,7],  rarity:0.70, color:"rgba(255,244,198,.95)", glow:"rgba(255,255,255,.75)" },
+    { key:"prism",    name:"棱晶", score:2, dmg:[7,12], rarity:0.23, color:"rgba(222,210,255,.95)", glow:"rgba(210,255,250,.55)" },
+    { key:"echo",     name:"回聲", score:3, dmg:[10,16],rarity:0.07, color:"rgba(188,255,235,.95)", glow:"rgba(255,255,255,.85)" }
+  ];
+
+  function pickShardType(){
+    const boost = echoBoostTimer > 0;
+    const weights = shardTypes.map(t => {
+      let w = t.rarity;
+      if (boost && t.key === "echo") w *= 2.2;
+      if (boost && t.key === "stardust") w *= 0.9;
+      return w;
+    });
+    const total = weights.reduce((a,b)=>a+b,0);
+    let r = Math.random()*total;
+    for(let i=0;i<shardTypes.length;i++){
+      r -= weights[i];
+      if(r <= 0) return shardTypes[i];
+    }
+    return shardTypes[0];
+  }
+
+  // ✅ 統一慢速（更好瞄準）
+  function makeShard(){
+    const t = pickShardType();
+    const baseSp = rand(24, 36);
+    const ang = rand(0, Math.PI*2);
+    return {
+      kind: "shard",
+      type: t,
+      x: rand(80, W-80),
+      y: rand(120, H-90),
+      vx: Math.cos(ang)*baseSp,
+      vy: Math.sin(ang)*baseSp*0.55,
+      r: rand(10, 14),
+      tw: rand(0, Math.PI*2),
+      alive: true,
+      hourly: false
+    };
+  }
+
   function makeHourlyEchoShard(){
-    const baseSp = rand(24, 36); // ✅ 已套用「統一慢速」
+    const baseSp = rand(24, 36);
     const ang = rand(0, Math.PI*2);
     return {
       kind: "shard",
@@ -632,85 +672,9 @@
       hourly: true
     };
   }
-  function triggerHourlyEvent(){
-    const msg = hourlyHintPool[(Math.random()*hourlyHintPool.length)|0];
-    echoBoostTimer = 12;
-    shards.push(makeHourlyEchoShard());
-    beep(820, 0.09, "triangle", 0.06);
-    showToast(msg + "\n✨整點回聲碎片已刷新！");
-  }
 
-  // ===== Game State =====
-  const maxDurability = 100;
-  const GAME_SECONDS = 60;
-
-  let running = false;
-  let timeLeft = GAME_SECONDS;
-  let score = 0;
-  let combo = 0;
-  let maxCombo = 0;
-  let breaks = 0;
-  let fishHits = 0;
-
-  // 🌙 夜間進入狀態（只觸發一次）
-  let lastFishNight = false;
-
-  const pointer = { x: W*0.5, y: H*0.55, pressed: false };
-
-  const net = {
-    x: pointer.x, y: pointer.y,
-    r: 38,
-    down: false,
-    durability: maxDurability,
-    broken: false,
-    cooldown: 0
-  };
-
-  // 碎片類型（分數/耐久不同，但速度已統一）
-  const shardTypes = [
-    { key:"stardust", name:"星屑", score:1, dmg:[4,7],  rarity:0.70, color:"rgba(255,244,198,.95)", glow:"rgba(255,255,255,.75)" },
-    { key:"prism",    name:"棱晶", score:2, dmg:[7,12], rarity:0.23, color:"rgba(222,210,255,.95)", glow:"rgba(210,255,250,.55)" },
-    { key:"echo",     name:"回聲", score:3, dmg:[10,16],rarity:0.07, color:"rgba(188,255,235,.95)", glow:"rgba(255,255,255,.85)" }
-  ];
-
-  function pickShardType(d){
-    const boost = echoBoostTimer > 0;
-    const weights = shardTypes.map(t => {
-      let w = t.rarity;
-      if (boost && t.key === "echo") w *= 2.2;
-      if (boost && t.key === "stardust") w *= 0.9;
-      return w;
-    });
-    const total = weights.reduce((a,b)=>a+b,0);
-    let r = Math.random()*total;
-    for(let i=0;i<shardTypes.length;i++){
-      r -= weights[i];
-      if(r <= 0) return shardTypes[i];
-    }
-    return shardTypes[0];
-  }
-
-  // ✅✅✅ 統一標準速度（已微調再降）
-  function makeShard(d){
-    const t = pickShardType(d);
-    const baseSp = rand(24, 36);          // ✅ 初速（更好瞄準）
-    const ang = rand(0, Math.PI*2);
-    return {
-      kind: "shard",
-      type: t,
-      x: rand(80, W-80),
-      y: rand(120, H-90),
-      vx: Math.cos(ang)*baseSp,
-      vy: Math.sin(ang)*baseSp*0.55,
-      r: rand(10, 14),
-      tw: rand(0, Math.PI*2),
-      alive: true,
-      hourly: false
-    };
-  }
-
-  function makeFish(d){
-    const baseSp = rand(70, 95); // 金魚可以比碎片稍快一點，仍好撈
+  function makeFish(){
+    const baseSp = rand(70, 95);
     const ang = rand(0, Math.PI*2);
     return {
       kind: "fish",
@@ -724,7 +688,7 @@
     };
   }
 
-  let shards = [];
+  const shards = [];
   let fish = null;
 
   const pops = [];
@@ -733,10 +697,6 @@
     pops.push({x,y,vy:-30,t:0.7,text,night});
   }
 
-  let spawnTimer = 0;
-  let fishTimer = 0;
-
-  // 暴走得分加成：維持，但不再加速度
   function scoreMult(d){
     return isFrenzy(d) ? 1.25 : 1.0;
   }
@@ -750,12 +710,9 @@
   }
   function displayTitle(s){
     const base = titleFromScore(s);
-    if(document.body.classList.contains("fish-night")){
-      return `夜間觀測員 · ${base}`; // ✅ 夜間限定稱號（只顯示）
-    }
-    return base;
+    return document.body.classList.contains("fish-night") ? `夜間觀測員 · ${base}` : base;
   }
-  function setTitleUI(){ uiTitle.textContent = displayTitle(score); }
+
   function setDurUI(){
     uiDurText.textContent = Math.round(net.durability);
     uiDurBar.style.width = `${(net.durability/maxDurability)*100}%`;
@@ -764,7 +721,8 @@
   function resetGame(){
     running = true;
     timeLeft = GAME_SECONDS;
-    score = 0; combo = 0; maxCombo = 0;
+    score = 0;
+    combo = 0; maxCombo = 0;
     breaks = 0; fishHits = 0;
 
     net.x = W*0.5; net.y = H*0.55;
@@ -773,24 +731,25 @@
     net.broken = false;
     net.cooldown = 0;
 
-    const now = new Date();
-    shards = Array.from({length: 12}, () => makeShard(now));
+    shards.length = 0;
+    for(let i=0;i<12;i++) shards.push(makeShard());
+
     fish = null;
     pops.length = 0;
-    spawnTimer = 0;
-    fishTimer = 0;
+
     echoBoostTimer = 0;
+    lastHourlyStamp = "";
 
     uiScore.textContent = score;
     uiTime.textContent = timeLeft;
     uiCombo.textContent = combo;
     uiFishCount.textContent = fishHits;
     uiBreaks.textContent = breaks;
+    uiTitle.textContent = displayTitle(score);
     setDurUI();
-    setTitleUI();
-    updateModeUI(now);
+    updateModeUI(new Date());
 
-    showToast("鹿鹿：別急，碎片會自己靠近。");
+    showToast("鹿鹿：碎片不會自己變分數，放心。");
   }
 
   function endGame(){
@@ -803,7 +762,8 @@
     saveRank(arr.slice(0, 20));
     renderRank();
 
-    resultText.innerHTML = `結算：<b>${score}</b> 分｜破網 <b>${breaks}</b> 次｜最高連擊 <b>${maxCombo}</b>｜金魚 <b>${fishHits}</b>｜稱號：<b>${displayTitle(score)}</b>${night ? " <b>🌙</b>" : ""}`;
+    resultText.innerHTML =
+      `結算：<b>${score}</b> 分｜破網 <b>${breaks}</b> 次｜最高連擊 <b>${maxCombo}</b>｜金魚 <b>${fishHits}</b>｜稱號：<b>${displayTitle(score)}</b>${night ? " <b>🌙</b>" : ""}`;
     overlay.style.display = "grid";
   }
 
@@ -843,18 +803,14 @@
 
   // ===== UI buttons =====
   startBtn.addEventListener('click', ()=>{
-    // ✅ 直向禁止開始
     if (isPortrait()) {
       updateOrientationUI();
       showToast("🦒 鹿鹿：先橫向！裂縫方向會扭曲視界。");
       return;
     }
-
     overlay.style.display = "none";
     resetGame();
     beep(660,0.06,"triangle",0.06);
-
-    // user gesture 後再試一次鎖橫向
     tryLockLandscape();
   });
 
@@ -873,6 +829,97 @@
 
   renderRank();
 
+  // ===== 整點事件 =====
+  function triggerHourlyEvent(){
+    const msg = hourlyHintPool[(Math.random()*hourlyHintPool.length)|0];
+    echoBoostTimer = 12;
+    shards.push(makeHourlyEchoShard());
+    beep(820, 0.09, "triangle", 0.06);
+    showToast(msg + "\n✨整點回聲碎片已刷新！");
+  }
+
+  // ===== Catch (唯一加分來源) =====
+  function catchShard(s, nowDate){
+    s.alive = false;
+
+    const mult = scoreMult(nowDate);
+    const add = Math.round(s.type.score * mult);
+
+    // ✅✅✅ 唯一加分點（碎片）
+    score += add;
+
+    uiScore.textContent = score;
+    uiTitle.textContent = displayTitle(score);
+
+    combo += 1;
+    maxCombo = Math.max(maxCombo, combo);
+    uiCombo.textContent = combo;
+
+    net.durability -= rand(s.type.dmg[0], s.type.dmg[1]);
+    spawnPop(s.x, s.y, `+${add}`);
+
+    if(s.type.key === "echo" || s.type.key === "echo_hourly"){
+      showToast("✨探索提示：你撈到了一段不穩定的回聲。");
+      beep(740,0.07,"triangle",0.05);
+    } else {
+      beep(560,0.05,"triangle",0.04);
+    }
+
+    if(net.durability <= 0){ breakNet(); return; }
+    setDurUI();
+  }
+
+  function catchFish(nowDate){
+    if(!fish) return;
+    fish.alive = false;
+    fish = null;
+
+    const mult = scoreMult(nowDate);
+    const add = Math.round(5 * mult);
+
+    // ✅✅✅ 唯一加分點（金魚）
+    score += add;
+
+    uiScore.textContent = score;
+    uiTitle.textContent = displayTitle(score);
+
+    combo += 2;
+    maxCombo = Math.max(maxCombo, combo);
+    uiCombo.textContent = combo;
+
+    fishHits += 1;
+    uiFishCount.textContent = fishHits;
+
+    net.durability -= rand(14, 22);
+    spawnPop(net.x, net.y-10, `+${add}`);
+
+    showToast(isFishNight(nowDate) ? "🌙撈到夜金魚！鹿鹿：今晚很旺。" : "🎉撈到金魚！鹿鹿：運氣不錯。");
+    beep(980,0.09,"triangle",0.06);
+
+    if(net.durability <= 0){ breakNet(); return; }
+    setDurUI();
+  }
+
+  function breakNet(){
+    net.durability = 0;
+    setDurUI();
+    net.broken = true;
+    net.down = false;
+    net.cooldown = 1.2;
+    breaks += 1;
+    uiBreaks.textContent = breaks;
+
+    combo = 0;
+    uiCombo.textContent = combo;
+
+    showToast("鹿鹿：網子破了…別硬撐啦。");
+    beep(220,0.10,"sawtooth",0.03);
+  }
+
+  // ===== Spawn pacing（不加分、只產生目標） =====
+  let spawnTimer = 0;
+  let fishTimer = 0;
+
   // ===== Main Loop =====
   let last = performance.now();
   function tick(now){
@@ -887,7 +934,7 @@
     const nowDate = new Date();
     updateModeUI(nowDate);
 
-    // 🌙 夜間進出處理（一次）
+    // 🌙 夜間進出
     const nowFishNight = isFishNight(nowDate);
     if(nowFishNight){
       document.body.classList.add("fish-night");
@@ -913,7 +960,7 @@
         uiTime.textContent = String(Math.ceil(timeLeft));
       }
 
-      // 整點 100% 必觸發
+      // 整點必觸發
       if (nowDate.getMinutes() === 0) {
         const stamp = hourlyStamp(nowDate);
         if (stamp !== lastHourlyStamp) {
@@ -933,7 +980,7 @@
       if (!net.broken && net.cooldown <= 0) net.down = pointer.pressed;
       if (net.cooldown > 0) net.cooldown -= dt;
 
-      // spawn shards (暴走：密度提升，但速度不變)
+      // spawn shards（暴走＝密度↑，不加速、不加分）
       spawnTimer += dt;
       const frenzy = isFrenzy(nowDate);
       const spawnEvery = frenzy ? 0.42 : 0.60;
@@ -942,10 +989,10 @@
       if(spawnTimer >= spawnEvery){
         spawnTimer = 0;
         const alive = shards.filter(s => s.alive).length;
-        if(alive < targetAlive) shards.push(makeShard(nowDate));
+        if(alive < targetAlive) shards.push(makeShard());
       }
 
-      // fish spawn (夜間更常出)
+      // fish spawn（夜間更多）
       fishTimer += dt;
       if(fishTimer >= 2){
         fishTimer = 0;
@@ -954,7 +1001,7 @@
           if (nowFishNight) p = 0.22;
           if (frenzy) p *= 1.10;
           if (Math.random() < p){
-            fish = makeFish(nowDate);
+            fish = makeFish();
             showToast(nowFishNight ? "🌙金魚之夜：金色游影出沒！" : "✨金魚驚喜出現！");
             beep(880,0.08,"triangle",0.05);
           }
@@ -966,11 +1013,9 @@
         if(!s.alive) continue;
         s.tw += dt*5;
 
-        // 輕微漂移（更可預測）
         s.vx += Math.sin(s.tw)*10*dt;
         s.vy += Math.cos(s.tw*0.9)*7*dt;
 
-        // ✅ 統一最高速度上限（已微調）
         const sp = Math.hypot(s.vx,s.vy);
         const maxSp = 78;
         if(sp > maxSp){ s.vx *= maxSp/sp; s.vy *= maxSp/sp; }
@@ -978,7 +1023,6 @@
         s.x += s.vx*dt;
         s.y += s.vy*dt;
 
-        // 邊界回彈（溫和）
         if (s.x < 70) s.vx += 85*dt;
         if (s.x > W-70) s.vx -= 85*dt;
         if (s.y < 120) s.vy += 65*dt;
@@ -987,7 +1031,6 @@
         s.x = clamp(s.x, 60, W-60);
         s.y = clamp(s.y, 110, H-60);
 
-        // 網子靠近時，碎片會「微躲」（已微調更慢、更好瞄準）
         if(net.down && !net.broken){
           const d2 = dist2(net.x, net.y, s.x, s.y);
           const fearR = 140;
@@ -1000,7 +1043,6 @@
           }
         }
 
-        // catch
         if(net.down && !net.broken){
           const hit = dist2(net.x, net.y, s.x, s.y) < (net.r + s.r - 6) ** 2;
           if(hit) catchShard(s, nowDate);
@@ -1043,7 +1085,6 @@
         if(p.t <= 0) pops.splice(i,1);
       }
 
-      // broken handling
       if(net.broken && net.cooldown <= 0){
         net.broken = false;
         net.durability = maxDurability;
@@ -1057,98 +1098,10 @@
     requestAnimationFrame(tick);
   }
 
-  function catchShard(s, nowDate){
-    s.alive = false;
-
-    const mult = scoreMult(nowDate);
-    const add = Math.round(s.type.score * mult);
-
-    score += add;
-    uiScore.textContent = score;
-    setTitleUI();
-
-    combo += 1;
-    maxCombo = Math.max(maxCombo, combo);
-    uiCombo.textContent = combo;
-
-    net.durability -= rand(s.type.dmg[0], s.type.dmg[1]);
-    spawnPop(s.x, s.y, `+${add}`);
-
-    if(s.type.key === "echo"){
-      const pool = [
-        "✨探索提示：回聲碎片在微微震動。",
-        "✨探索提示：裂縫訊號…增強了。",
-        "✨探索提示：系統反向標記風險上升 👀",
-        "✨探索提示：鹿鹿盯著天空裂縫看了一秒。"
-      ];
-      showToast(pool[(Math.random()*pool.length)|0]);
-      beep(740,0.07,"triangle",0.05);
-    } else if (s.type.key === "echo_hourly"){
-      const pool = [
-        "🕳️整點回聲：你感覺到水面下有「回應」。",
-        "📡整點回聲：訊號指向園區上空——別抬頭。",
-        "👀整點回聲：系統正在記錄鹿粉行為（保持自然）。"
-      ];
-      showToast(pool[(Math.random()*pool.length)|0]);
-      beep(920,0.09,"triangle",0.06);
-    } else {
-      beep(560,0.05,"triangle",0.04);
-    }
-
-    if(net.durability <= 0){ breakNet(); return; }
-    setDurUI();
-  }
-
-  function catchFish(nowDate){
-    fish.alive = false;
-    fish = null;
-
-    const mult = scoreMult(nowDate);
-    const add = Math.round(5 * mult);
-
-    score += add;
-    uiScore.textContent = score;
-    setTitleUI();
-
-    combo += 2;
-    maxCombo = Math.max(maxCombo, combo);
-    uiCombo.textContent = combo;
-
-    fishHits += 1;
-    uiFishCount.textContent = fishHits;
-
-    net.durability -= rand(14, 22);
-    spawnPop(net.x, net.y-10, `+${add}`);
-
-    showToast(isFishNight(nowDate) ? "🌙撈到夜金魚！鹿鹿：今晚很旺。" : "🎉撈到金魚！鹿鹿：運氣不錯。");
-    beep(980,0.09,"triangle",0.06);
-
-    if(net.durability <= 0){ breakNet(); return; }
-    setDurUI();
-  }
-
-  function breakNet(){
-    net.durability = 0;
-    setDurUI();
-    net.broken = true;
-    net.down = false;
-    net.cooldown = 1.2;
-    breaks += 1;
-    uiBreaks.textContent = breaks;
-
-    combo = 0;
-    uiCombo.textContent = combo;
-
-    showToast("鹿鹿：網子破了…別硬撐啦。");
-    beep(220,0.10,"sawtooth",0.03);
-  }
-
-  // ===== Draw =====
   function draw(){
     ctx.clearRect(0,0,W,H);
     const t = performance.now()/1000;
 
-    // ripples
     ctx.globalAlpha = 0.22;
     for(let i=0;i<7;i++){
       ctx.beginPath();
@@ -1163,7 +1116,6 @@
     for(const s of shards){ if(s.alive) drawShard(s); }
     if(fish && fish.alive) drawFish(fish);
 
-    // pops (A：夜間金色跳字)
     for(const p of pops){
       ctx.save();
       ctx.globalAlpha = clamp(p.t/0.7, 0, 1);
@@ -1178,7 +1130,6 @@
 
     drawNet();
 
-    // top shade
     ctx.globalAlpha = 0.10;
     ctx.fillStyle = "rgba(0,0,0,.9)";
     ctx.fillRect(0,0,W,14);
@@ -1193,9 +1144,6 @@
     const a = performance.now()/700 + s.tw;
     ctx.rotate(a);
 
-    const isHourly = !!s.hourly;
-
-    // 🌙 夜間：金色軌跡暈影
     if(isNight){
       ctx.globalAlpha = 0.25;
       ctx.beginPath();
@@ -1204,9 +1152,9 @@
       ctx.fill();
     }
 
-    ctx.globalAlpha = isHourly ? 0.78 : 0.55;
+    ctx.globalAlpha = s.hourly ? 0.78 : 0.55;
     ctx.beginPath();
-    ctx.arc(0,0, s.r*(isHourly?2.5:2.1), 0, Math.PI*2);
+    ctx.arc(0,0, s.r*(s.hourly?2.5:2.1), 0, Math.PI*2);
     ctx.fillStyle = s.type.glow;
     ctx.fill();
 
@@ -1220,7 +1168,7 @@
     ctx.fillStyle = s.type.color;
     ctx.fill();
 
-    if(isHourly){
+    if(s.hourly){
       ctx.globalAlpha = 0.85;
       ctx.beginPath();
       ctx.arc(0,0, s.r*1.35, 0, Math.PI*2);
@@ -1294,7 +1242,7 @@
     ctx.restore();
   }
 
-  // ===== Start =====
+  // 初始顯示
   overlay.style.display = "grid";
   renderRank();
   requestAnimationFrame(tick);
