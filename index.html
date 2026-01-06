@@ -6,31 +6,23 @@
   <title>裂縫水池：鹿粉撈撈祭</title>
   <style>
     :root{
-      --bg1:#0b1020;
-      --bg2:#152447;
       --panel: rgba(255,255,255,0.10);
-      --panel2: rgba(255,255,255,0.16);
       --txt: rgba(255,255,255,0.92);
       --muted: rgba(255,255,255,0.70);
-      --accent:#7ee7ff;
-      --gold:#ffd36a;
-      --danger:#ff6a7a;
-      --ok:#8bffb0;
       --shadow: 0 12px 28px rgba(0,0,0,0.35);
-      --radius: 18px;
     }
     html,body{
-      margin:0;height:100%;background: radial-gradient(1200px 800px at 20% 10%, #1b2a5c 0%, var(--bg1) 55%, #060914 100%);
-      color:var(--txt); font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", Arial, sans-serif;
+      margin:0;height:100%;
+      background: radial-gradient(1200px 800px at 20% 10%, #1b2a5c 0%, #0b1020 55%, #060914 100%);
+      color:var(--txt);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", Arial, sans-serif;
       overflow:hidden;
     }
     #gameWrap{ position:fixed; inset:0; display:flex; align-items:center; justify-content:center; }
     canvas{ width:100vw; height:100vh; display:block; }
 
     /* HUD */
-    #hud{
-      position:fixed; inset:0; pointer-events:none;
-    }
+    #hud{ position:fixed; inset:0; pointer-events:none; }
     .chip{
       display:inline-flex; align-items:center; gap:10px;
       padding:10px 14px; border-radius:999px;
@@ -38,13 +30,12 @@
       box-shadow: var(--shadow);
       border:1px solid rgba(255,255,255,0.08);
       backdrop-filter: blur(10px);
-      font-weight:700;
+      font-weight:800;
       letter-spacing:0.2px;
     }
-    .chip small{ font-weight:800; opacity:0.9; }
     #topLeft{ position:absolute; left:14px; top:14px; display:flex; gap:10px; flex-wrap:wrap; }
     #topRight{ position:absolute; right:14px; top:14px; display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end; }
-    #bottomLeft{ position:absolute; left:14px; bottom:14px; display:flex; gap:10px; flex-wrap:wrap; }
+    #bottomLeft{ position:absolute; left:14px; bottom:14px; display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end; }
     #bottomRight{ position:absolute; right:14px; bottom:14px; display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end; }
 
     .btn{
@@ -56,27 +47,53 @@
       border:1px solid rgba(255,255,255,0.12);
       box-shadow: var(--shadow);
       color:var(--txt);
-      font-weight:800;
+      font-weight:900;
       display:inline-flex; align-items:center; gap:10px;
       user-select:none;
-      transition: transform .08s ease, background .2s ease, border-color .2s ease;
+      transition: transform .08s ease;
     }
     .btn:active{ transform: translateY(1px) scale(0.99); }
     .btn.primary{
       background: linear-gradient(180deg, rgba(126,231,255,0.28), rgba(126,231,255,0.12));
       border-color: rgba(126,231,255,0.35);
     }
-    .btn.gold{
-      background: linear-gradient(180deg, rgba(255,211,106,0.28), rgba(255,211,106,0.12));
-      border-color: rgba(255,211,106,0.35);
-    }
-    .btn.danger{
-      background: linear-gradient(180deg, rgba(255,106,122,0.26), rgba(255,106,122,0.10));
-      border-color: rgba(255,106,122,0.35);
-    }
-    .btn.tiny{ padding:10px 12px; border-radius: 12px; font-weight:800; }
+    .btn.tiny{ padding:10px 12px; border-radius: 12px; font-weight:900; }
 
-    /* Overlay: portrait lock */
+    .badge{
+      display:inline-flex; align-items:center; gap:8px;
+      padding: 9px 12px; border-radius: 999px;
+      background: rgba(255,255,255,0.12);
+      border:1px solid rgba(255,255,255,0.12);
+      font-weight:900;
+      letter-spacing:0.2px;
+    }
+
+    /* Volume controls */
+    .volBox{
+      pointer-events:auto;
+      display:flex; flex-direction:column; gap:8px;
+      padding:10px 12px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.10);
+      border:1px solid rgba(255,255,255,0.12);
+      backdrop-filter: blur(10px);
+      box-shadow: var(--shadow);
+      min-width: 220px;
+    }
+    .volRow{
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      font-weight:900;
+      color: rgba(255,255,255,0.88);
+      font-size: 12.5px;
+    }
+    .volRow span{ color: rgba(255,255,255,0.78); font-weight:900; }
+    .volRow .val{ min-width: 32px; text-align:right; color: rgba(255,255,255,0.86); }
+    input[type="range"]{
+      width:100%;
+      accent-color: rgba(126,231,255,0.95);
+    }
+
+    /* Portrait lock */
     #rotateLock{
       position:fixed; inset:0;
       display:none;
@@ -96,12 +113,8 @@
       backdrop-filter: blur(10px);
     }
     #rotateLock h2{ margin:0 0 10px 0; font-size: 22px; }
-    #rotateLock p{ margin: 8px 0; color: var(--muted); line-height: 1.6; }
-    #rotateLock .icon{
-      font-size: 40px;
-      margin-bottom: 8px;
-      opacity: 0.95;
-    }
+    #rotateLock p{ margin: 8px 0; color: var(--muted); line-height: 1.6; font-weight:800; }
+    #rotateLock .icon{ font-size: 40px; margin-bottom: 8px; opacity: 0.95; }
 
     /* Modal */
     #modal{
@@ -120,7 +133,7 @@
       box-shadow: var(--shadow);
       backdrop-filter: blur(12px);
       overflow:hidden;
-      transform: scale(0.75); /* 需求：開局玩法視窗縮小為 0.75 */
+      transform: scale(0.75);
       transform-origin:center;
     }
     #modal .head{
@@ -128,15 +141,15 @@
       display:flex; align-items:center; justify-content:space-between;
       background: rgba(255,255,255,0.06);
       border-bottom: 1px solid rgba(255,255,255,0.10);
+      gap: 12px;
+      flex-wrap: wrap;
     }
-    #modal .head .title{
-      display:flex; flex-direction:column; gap:2px;
-    }
+    #modal .head .title{ display:flex; flex-direction:column; gap:2px; }
     #modal .head h1{ margin:0; font-size: 20px; letter-spacing:0.3px; }
-    #modal .head .sub{ color: var(--muted); font-weight:700; font-size: 12.5px; }
+    #modal .head .sub{ color: var(--muted); font-weight:800; font-size: 12.5px; }
     #modal .body{ padding: 16px 18px 18px; }
-    #modal .body p{ margin: 10px 0; color: var(--muted); line-height: 1.7; font-weight:650; }
-    #modal .body ul{ margin: 10px 0 0 18px; padding:0; color: var(--muted); line-height: 1.75; font-weight:650;}
+    #modal .body p{ margin: 10px 0; color: var(--muted); line-height: 1.7; font-weight:800; }
+    #modal .body ul{ margin: 10px 0 0 18px; padding:0; color: var(--muted); line-height: 1.75; font-weight:800;}
     #modal .foot{
       padding: 14px 18px 18px;
       display:flex; align-items:center; justify-content:space-between; gap:12px;
@@ -144,9 +157,19 @@
     }
     #modal .foot .hint{
       color: rgba(255,255,255,0.78);
-      font-weight:800;
+      font-weight:900;
       font-size: 12.5px;
       opacity: 0.95;
+    }
+    .kbd{
+      display:inline-flex; align-items:center; justify-content:center;
+      padding: 2px 8px;
+      border-radius: 8px;
+      border:1px solid rgba(255,255,255,0.16);
+      background: rgba(0,0,0,0.25);
+      font-weight:900;
+      font-size: 12px;
+      color: rgba(255,255,255,0.88);
     }
 
     /* Leaderboard */
@@ -186,41 +209,20 @@
     th,td{
       padding: 10px 10px;
       border-bottom: 1px solid rgba(255,255,255,0.08);
-      font-weight:800;
+      font-weight:900;
       font-size: 13px;
       color: rgba(255,255,255,0.90);
     }
     th{ text-align:left; color: rgba(255,255,255,0.78); }
     tr:last-child td{ border-bottom:none; }
     .right{ text-align:right; }
-    .muted{ color: var(--muted); }
-
-    /* Small badge */
-    .badge{
-      display:inline-flex; align-items:center; gap:8px;
-      padding: 9px 12px; border-radius: 999px;
-      background: rgba(255,255,255,0.12);
-      border:1px solid rgba(255,255,255,0.12);
-      font-weight:900;
-      letter-spacing:0.2px;
-    }
-    .badge.gold{ background: rgba(255,211,106,0.14); border-color: rgba(255,211,106,0.24); color: rgba(255,243,215,0.98);}
-    .badge.danger{ background: rgba(255,106,122,0.14); border-color: rgba(255,106,122,0.24); }
-    .kbd{
-      display:inline-flex; align-items:center; justify-content:center;
-      padding: 2px 8px;
-      border-radius: 8px;
-      border:1px solid rgba(255,255,255,0.16);
-      background: rgba(0,0,0,0.25);
-      font-weight:900;
-      font-size: 12px;
-      color: rgba(255,255,255,0.88);
-    }
+    .muted{ color: var(--muted); font-weight:900; }
   </style>
 
   <!-- ✅ LIFF 支援（只需改一行 LIFF_ID） -->
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
+
 <body>
   <div id="gameWrap">
     <canvas id="c"></canvas>
@@ -236,7 +238,7 @@
     </div>
   </div>
 
-  <!-- Tutorial modal (scaled 0.75) -->
+  <!-- Tutorial modal -->
   <div id="modal">
     <div class="panel">
       <div class="head">
@@ -249,15 +251,18 @@
           <div class="btn tiny" id="btnSoundHint" title="建議開啟音量更好玩">🔊 建議開音量</div>
         </div>
       </div>
+
       <div class="body">
         <p>玩法：<b>按住（滑鼠/手指）</b>在水池下網，鬆開收網。收網時若碰到物件就能撈起得分！</p>
         <ul>
           <li>⏱️ 只有 <b>60 秒</b>，節奏要快但別亂：<b>撈到才算</b>。</li>
           <li>🧩 碎片：基礎得分；🐟 金魚：較高得分；🌙 金色金魚：夜間特別分數。</li>
           <li>🔥 連擊：連續成功撈起會提高連擊；若一趟空網就會斷連擊。</li>
+          <!-- ✅ 依你要求：紅框內兩句已完全移除，不再出現在教學視窗 -->
         </ul>
         <p class="muted">小提示：開啟音量遊玩會更有趣 ✨</p>
       </div>
+
       <div class="foot">
         <div class="hint">操作：<span class="kbd">按住</span> 下網｜<span class="kbd">鬆開</span> 收網｜<span class="kbd">R</span> 重新開始</div>
         <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end;">
@@ -267,13 +272,13 @@
       </div>
     </div>
 
-    <!-- 需求：右下角有「快速開始」 -->
+    <!-- 右下角快速開始 -->
     <div id="quickStartWrap" style="position:fixed; right:14px; bottom:14px; z-index:60;">
       <div class="btn primary" id="btnQuickStart">⚡ 快速開始</div>
     </div>
   </div>
 
-  <!-- Leaderboard modal -->
+  <!-- Leaderboard -->
   <div id="lb">
     <div class="panel">
       <div class="head">
@@ -281,9 +286,7 @@
         <div class="btn" id="btnCloseLB">關閉</div>
       </div>
       <div class="body">
-        <div class="muted" style="font-weight:800; margin-bottom:10px;">
-          只保留「今天」的資料（跨日會自動歸零）。
-        </div>
+        <div class="muted" style="margin-bottom:10px;">只保留「今天」的資料（跨日會自動歸零）。</div>
         <table>
           <thead>
             <tr>
@@ -295,9 +298,7 @@
           </thead>
           <tbody id="lbBody"></tbody>
         </table>
-        <div class="muted" style="margin-top:12px; font-weight:800;">
-          你可以在結算時輸入暱稱（LIFF 會優先使用 LINE 名稱）。
-        </div>
+        <div class="muted" style="margin-top:12px;">你可以在結算時輸入暱稱（LIFF 會優先使用 LINE 名稱）。</div>
       </div>
     </div>
   </div>
@@ -309,14 +310,32 @@
       <div class="chip">🏁 分數 <span id="score">0</span></div>
       <div class="chip">🔥 連擊 <span id="combo">0</span></div>
     </div>
+
     <div id="topRight">
       <div class="badge" id="modeBadge">🫧 休閒模式</div>
-      <div class="chip" id="multChip">倍率 x<span id="mult">1.0</span></div>
+      <div class="chip">倍率 x<span id="mult">1.0</span></div>
     </div>
+
     <div id="bottomLeft">
       <div class="btn tiny" id="btnMute">🔈 音效：開</div>
       <div class="btn tiny" id="btnBgm">🎵 BGM：開</div>
+
+      <!-- ✅ 新增：可手動調整音量 -->
+      <div class="volBox" aria-label="volume controls">
+        <div class="volRow">
+          <span>🫧 點擊音效音量</span>
+          <span class="val" id="sfxVal">50</span>
+        </div>
+        <input id="sfxVol" type="range" min="0" max="100" step="1" value="50" />
+
+        <div class="volRow" style="margin-top:2px;">
+          <span>🎵 環境 BGM 音量</span>
+          <span class="val" id="bgmVal">25</span>
+        </div>
+        <input id="bgmVol" type="range" min="0" max="100" step="1" value="25" />
+      </div>
     </div>
+
     <div id="bottomRight">
       <div class="btn tiny" id="btnHow">📖 教學</div>
       <div class="btn tiny" id="btnRestart">🔁 重開</div>
@@ -351,22 +370,16 @@
 
   function todayKey(){
     const d = new Date();
-    const yyyy = d.getFullYear();
-    const mm = String(d.getMonth()+1).padStart(2,'0');
-    const dd = String(d.getDate()).padStart(2,'0');
-    return `${yyyy}-${mm}-${dd}`;
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
   }
-
   function nowEvent(){
-    const d = new Date();
-    const h = d.getHours();
-    const frenzy = (h >= 12 && h < 14);
-    const night = (h >= 19 && h < 21);
-    return { frenzy, night, hour: h };
+    const h = new Date().getHours();
+    return { frenzy: (h>=12 && h<14), night: (h>=19 && h<21), hour:h };
   }
 
   /**********************
    * Audio (no external files)
+   * ✅ 新增：手動可調整 SFX / BGM 音量（並記住設定）
    **********************/
   let audioCtx = null;
   let sfxEnabled = true;
@@ -375,22 +388,65 @@
   let sfxGainNode = null;
   let bgmGainNode = null;
 
+  // slider 0~100 -> gain mapping (conservative, not noisy)
+  const SFX_GAIN_MAX = 0.22;   // 最高仍不會太吵
+  const BGM_GAIN_MAX = 0.06;   // ✅ 比你原本覺得大聲的更低上限
+
+  function loadVolSettings(){
+    const sfx = Number(localStorage.getItem("rr_sfx_vol") ?? "50");
+    const bgm = Number(localStorage.getItem("rr_bgm_vol") ?? "25"); // ✅ 預設更小聲
+    return {
+      sfx: clamp(isFinite(sfx)?sfx:50, 0, 100),
+      bgm: clamp(isFinite(bgm)?bgm:25, 0, 100),
+    };
+  }
+  function saveVolSettings(sfx, bgm){
+    localStorage.setItem("rr_sfx_vol", String(sfx));
+    localStorage.setItem("rr_bgm_vol", String(bgm));
+  }
+  function sliderToGain(val01_100, maxGain){
+    const t = clamp(val01_100, 0, 100) / 100;
+    // 非線性曲線：小音量更細緻
+    const curved = Math.pow(t, 1.6);
+    return curved * maxGain;
+  }
+
   function ensureAudio(){
     if(audioCtx) return;
     const AC = window.AudioContext || window.webkitAudioContext;
     audioCtx = new AC();
-
     sfxGainNode = audioCtx.createGain();
     bgmGainNode = audioCtx.createGain();
-
-    // ✅ 降低 BGM 音量（原本 0.08 -> 0.045）
-    sfxGainNode.gain.value = 0.18;
-    bgmGainNode.gain.value = 0.045;
-
     sfxGainNode.connect(audioCtx.destination);
     bgmGainNode.connect(audioCtx.destination);
   }
 
+  function applyVolumes(){
+    const sfxV = Number($("sfxVol").value);
+    const bgmV = Number($("bgmVol").value);
+
+    $("sfxVal").textContent = String(sfxV);
+    $("bgmVal").textContent = String(bgmV);
+
+    saveVolSettings(sfxV, bgmV);
+
+    if(!audioCtx || !sfxGainNode || !bgmGainNode) return;
+
+    const sfxGain = sfxEnabled ? sliderToGain(sfxV, SFX_GAIN_MAX) : 0.0001;
+    const bgmGain = bgmEnabled ? sliderToGain(bgmV, BGM_GAIN_MAX) : 0.0001;
+
+    sfxGainNode.gain.value = sfxGain;
+    bgmGainNode.gain.value = bgmGain;
+  }
+
+  function applyAudioToggles(){
+    $("btnMute").textContent = sfxEnabled ? "🔈 音效：開" : "🔇 音效：關";
+    $("btnBgm").textContent  = bgmEnabled ? "🎵 BGM：開" : "🎵 BGM：關";
+    if(bgmEnabled) startBGM(); else stopBGM();
+    applyVolumes();
+  }
+
+  // Bubble SFX (combo pitch up)
   function playBubble(comboLevel){
     if(!sfxEnabled) return;
     ensureAudio();
@@ -415,6 +471,7 @@
     lp.frequency.setValueAtTime(1400, t0);
     lp.Q.value = 0.9;
 
+    // envelope (quiet by design; final loudness is controlled by slider)
     g.gain.setValueAtTime(0.0001, t0);
     g.gain.exponentialRampToValueAtTime(0.55, t0 + 0.012);
     g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.12);
@@ -422,17 +479,15 @@
     o1.frequency.exponentialRampToValueAtTime(f1 * 0.75, t0 + 0.09);
     o2.frequency.exponentialRampToValueAtTime(f2 * 0.80, t0 + 0.10);
 
-    o1.connect(lp);
-    o2.connect(lp);
+    o1.connect(lp); o2.connect(lp);
     lp.connect(g);
     g.connect(sfxGainNode);
 
-    o1.start(t0);
-    o2.start(t0);
-    o1.stop(t0 + 0.14);
-    o2.stop(t0 + 0.14);
+    o1.start(t0); o2.start(t0);
+    o1.stop(t0 + 0.14); o2.stop(t0 + 0.14);
   }
 
+  // Procedural BGM
   let bgmTimer = null;
   let bgmNodes = [];
   let bgmStep = 0;
@@ -452,7 +507,7 @@
     if(bgmTimer) return;
 
     const bpm = 122;
-    const stepMs = (60_000 / bpm) / 2;
+    const stepMs = (60_000 / bpm) / 2; // 1/8
 
     const prog = [
       { root: 0,  type: "maj" },
@@ -462,11 +517,8 @@
     ];
     const scale = [0,2,4,7,9,12,14,16];
 
-    function midiToHz(m){ return 440 * Math.pow(2, (m-69)/12); }
-    function chordTones(rootMidi, type){
-      const triad = (type==="min") ? [0,3,7] : [0,4,7];
-      return triad.map(x=>rootMidi+x);
-    }
+    const midiToHz = (m)=> 440 * Math.pow(2, (m-69)/12);
+    const chordTones = (rootMidi, type) => (type==="min" ? [0,3,7] : [0,4,7]).map(x=>rootMidi+x);
 
     function pluck(freq, dur=0.13, when=audioCtx.currentTime){
       const o = audioCtx.createOscillator();
@@ -484,12 +536,8 @@
       g.gain.exponentialRampToValueAtTime(0.22, when + 0.01);
       g.gain.exponentialRampToValueAtTime(0.0001, when + dur);
 
-      o.connect(hp);
-      hp.connect(g);
-      g.connect(bgmGainNode);
-
-      o.start(when);
-      o.stop(when + dur + 0.02);
+      o.connect(hp); hp.connect(g); g.connect(bgmGainNode);
+      o.start(when); o.stop(when + dur + 0.02);
       bgmNodes.push(o,g,hp);
     }
 
@@ -509,12 +557,8 @@
       g.gain.exponentialRampToValueAtTime(0.12, when + 0.05);
       g.gain.exponentialRampToValueAtTime(0.0001, when + dur);
 
-      o.connect(lp);
-      lp.connect(g);
-      g.connect(bgmGainNode);
-
-      o.start(when);
-      o.stop(when + dur + 0.03);
+      o.connect(lp); lp.connect(g); g.connect(bgmGainNode);
+      o.start(when); o.stop(when + dur + 0.03);
       bgmNodes.push(o,g,lp);
     }
 
@@ -527,9 +571,7 @@
       const tones = chordTones(rootMidi, p.type);
 
       if(bgmStep % 8 === 0){
-        for(const m of tones){
-          pad(midiToHz(m - 12), 0.62, t);
-        }
+        for(const m of tones) pad(midiToHz(m - 12), 0.62, t);
       }
 
       const should = (bgmStep % 2 === 0) && Math.random() < 0.82;
@@ -540,18 +582,8 @@
       }
 
       bgmStep = (bgmStep + 1) % 64;
-      if(bgmNodes.length > 200) bgmNodes.splice(0, 120);
+      if(bgmNodes.length > 220) bgmNodes.splice(0, 130);
     }, stepMs);
-  }
-
-  function applyAudioToggles(){
-    $("btnMute").textContent = sfxEnabled ? "🔈 音效：開" : "🔇 音效：關";
-    $("btnBgm").textContent  = bgmEnabled ? "🎵 BGM：開" : "🎵 BGM：關";
-    if(audioCtx && sfxGainNode) sfxGainNode.gain.value = sfxEnabled ? 0.18 : 0.0001;
-    // ✅ 降低 BGM 音量（維持 0.045）
-    if(audioCtx && bgmGainNode) bgmGainNode.gain.value = bgmEnabled ? 0.045 : 0.0001;
-
-    if(bgmEnabled) startBGM(); else stopBGM();
   }
 
   /**********************
@@ -572,9 +604,7 @@
   window.addEventListener("resize", resize);
   resize();
 
-  function isLandscape(){
-    return window.innerWidth >= window.innerHeight;
-  }
+  function isLandscape(){ return window.innerWidth >= window.innerHeight; }
   function updateRotateLock(){
     const locked = !isLandscape();
     $("rotateLock").style.display = locked ? "flex" : "none";
@@ -615,28 +645,15 @@
   function setModeUI(){
     state.event = nowEvent();
     if(state.event.night){
-      state.modeName = "金魚之夜";
-      state.modeIcon = "🌙";
-      state.modeTag  = "NIGHT";
+      state.modeName = "金魚之夜"; state.modeIcon = "🌙"; state.modeTag = "NIGHT";
     }else if(state.event.frenzy){
-      state.modeName = "裂縫暴走";
-      state.modeIcon = "🔥";
-      state.modeTag  = "FRENZY";
+      state.modeName = "裂縫暴走"; state.modeIcon = "🔥"; state.modeTag = "FRENZY";
     }else{
-      state.modeName = "休閒模式";
-      state.modeIcon = "🫧";
-      state.modeTag  = "DAY";
+      state.modeName = "休閒模式"; state.modeIcon = "🫧"; state.modeTag = "DAY";
     }
-
     $("modeBadge").textContent = `${state.modeIcon} ${state.modeName}`;
     $("eventBadge").textContent = `${state.modeIcon} ${state.modeName}`;
     $("eventSub").textContent = "60 秒撈取挑戰｜按住下網撈碎片／金魚得分";
-
-    if(state.event.night){
-      document.documentElement.style.setProperty("--accent", "#ffd36a");
-    }else{
-      document.documentElement.style.setProperty("--accent", "#7ee7ff");
-    }
   }
 
   function poolLayout(){
@@ -648,7 +665,6 @@
     const w = W - pad*2;
     const h = H - (pad + topHud) - (pad + bottomHud);
     state.pool = { x, y, w, h };
-
     state.net.x = x + w/2;
     state.net.y = y + 14;
     state.net.targetY = y + h * state.net.depth;
@@ -656,6 +672,13 @@
   }
   poolLayout();
   window.addEventListener("resize", poolLayout);
+
+  function updateHUD(){
+    $("timeLeft").textContent = state.tLeft.toFixed(1);
+    $("score").textContent = Math.floor(state.score);
+    $("combo").textContent = state.combo;
+    $("mult").textContent = state.mult.toFixed(1);
+  }
 
   function resetGame(){
     setModeUI();
@@ -678,8 +701,8 @@
     if(!isLandscape()){ updateRotateLock(); return; }
     ensureAudio();
     if(audioCtx.state === "suspended"){ audioCtx.resume().catch(()=>{}); }
-    setModeUI();
 
+    setModeUI();
     state.phase = "playing";
     state.tLeft = 60.0;
     state.score = 0;
@@ -712,15 +735,8 @@
     showLeaderboard();
   }
 
-  function updateHUD(){
-    $("timeLeft").textContent = state.tLeft.toFixed(1);
-    $("score").textContent = Math.floor(state.score);
-    $("combo").textContent = state.combo;
-    $("mult").textContent = state.mult.toFixed(1);
-  }
-
   /**********************
-   * Leaderboard
+   * Leaderboard (today only)
    **********************/
   function lbStorageKey(){ return `rr_leaderboard_${todayKey()}`; }
 
@@ -731,7 +747,7 @@
       arr = JSON.parse(localStorage.getItem(key) || "[]");
       if(!Array.isArray(arr)) arr = [];
     }catch(e){ arr = []; }
-
+    // cleanup other days
     try{
       for(let i=0;i<localStorage.length;i++){
         const k = localStorage.key(i);
@@ -777,7 +793,6 @@
       tbody.appendChild(tr);
     });
   }
-
   function showLeaderboard(){ renderLB(); $("lb").style.display = "flex"; }
   function hideLeaderboard(){ $("lb").style.display = "none"; }
 
@@ -830,7 +845,6 @@
     if(state.phase !== "playing") return;
     if(!state.pointerDown) return;
     state.pointerDown = false;
-
     if(state.net.phase === "down"){
       state.net.phase = "up";
       addRipple(state.net.x, state.net.y, 0.9);
@@ -847,15 +861,10 @@
   canvas.addEventListener("touchcancel", pointerUp, { passive:false });
 
   window.addEventListener("keydown", (e) => {
-    if(e.key.toLowerCase() === "r"){
-      resetGame(); hideModal(); startGame();
-    }
-    if(e.key.toLowerCase() === "m"){
-      sfxEnabled = !sfxEnabled; applyAudioToggles();
-    }
-    if(e.key.toLowerCase() === "b"){
-      bgmEnabled = !bgmEnabled; applyAudioToggles();
-    }
+    const k = e.key.toLowerCase();
+    if(k === "r"){ resetGame(); hideModal(); startGame(); }
+    if(k === "m"){ sfxEnabled = !sfxEnabled; applyAudioToggles(); }
+    if(k === "b"){ bgmEnabled = !bgmEnabled; applyAudioToggles(); }
   });
 
   /**********************
@@ -867,16 +876,13 @@
     if(state.event.night) r *= 1.25;
     return r;
   }
-
   function scoreMultiplier(){
     let m = 1.0 + clamp(state.combo, 0, 30) * 0.03;
     if(state.event.frenzy) m *= 1.35;
     return m;
   }
-
   function spawnItem(){
     const { x, y, w } = state.pool;
-
     const crackX = x + w*0.5 + (Math.random()-0.5)*w*0.28;
     const spawnY = y + 8 + Math.random()*10;
 
@@ -897,12 +903,9 @@
 
     state.items.push({
       type,
-      x: crackX,
-      y: spawnY,
-      vx: drift,
-      vy: baseSpeed,
-      size,
-      val,
+      x: crackX, y: spawnY,
+      vx: drift, vy: baseSpeed,
+      size, val,
       wobble: Math.random()*Math.PI*2,
       caught: false,
     });
@@ -917,8 +920,7 @@
       if(it.caught) continue;
       const dx = it.x - net.x;
       const dy = it.y - net.y;
-      const dist = Math.hypot(dx, dy);
-      if(dist < r * 0.92){
+      if(Math.hypot(dx, dy) < r * 0.92){
         it.caught = true;
         caught++;
         net.caughtThisRun++;
@@ -972,16 +974,9 @@
   function drawBackground(){
     const { frenzy, night } = state.event;
     const g = ctx.createLinearGradient(0, 0, 0, H);
-    if(night){
-      g.addColorStop(0, "#0a0f18");
-      g.addColorStop(1, "#1c1b2a");
-    }else if(frenzy){
-      g.addColorStop(0, "#1a1430");
-      g.addColorStop(1, "#0a0d18");
-    }else{
-      g.addColorStop(0, "#0b1020");
-      g.addColorStop(1, "#070a14");
-    }
+    if(night){ g.addColorStop(0, "#0a0f18"); g.addColorStop(1, "#1c1b2a"); }
+    else if(frenzy){ g.addColorStop(0, "#1a1430"); g.addColorStop(1, "#0a0d18"); }
+    else{ g.addColorStop(0, "#0b1020"); g.addColorStop(1, "#070a14"); }
     ctx.fillStyle = g;
     ctx.fillRect(0,0,W,H);
 
@@ -1006,24 +1001,18 @@
     ctx.strokeStyle = "rgba(255,255,255,0.16)";
     ctx.lineWidth = 2;
     roundRect(x, y, w, h, 22);
-    ctx.fill();
-    ctx.stroke();
+    ctx.fill(); ctx.stroke();
 
     const wg = ctx.createLinearGradient(0, y, 0, y+h);
-    if(night){
-      wg.addColorStop(0, "rgba(255,211,106,0.14)");
-      wg.addColorStop(1, "rgba(80,40,12,0.18)");
-    }else if(frenzy){
-      wg.addColorStop(0, "rgba(255,106,122,0.12)");
-      wg.addColorStop(1, "rgba(40,20,60,0.20)");
-    }else{
-      wg.addColorStop(0, "rgba(126,231,255,0.14)");
-      wg.addColorStop(1, "rgba(20,60,90,0.18)");
-    }
+    if(night){ wg.addColorStop(0, "rgba(255,211,106,0.14)"); wg.addColorStop(1, "rgba(80,40,12,0.18)"); }
+    else if(frenzy){ wg.addColorStop(0, "rgba(255,106,122,0.12)"); wg.addColorStop(1, "rgba(40,20,60,0.20)"); }
+    else{ wg.addColorStop(0, "rgba(126,231,255,0.14)"); wg.addColorStop(1, "rgba(20,60,90,0.18)"); }
+
     ctx.fillStyle = wg;
     roundRect(x+8, y+8, w-16, h-16, 18);
     ctx.fill();
 
+    // crack
     const cx = x + w*0.5;
     ctx.save();
     ctx.translate(cx, y+18);
@@ -1039,10 +1028,7 @@
     ctx.lineTo(len*0.18, 10);
     ctx.lineTo(len*0.55, 2);
     ctx.stroke();
-
-    ctx.globalAlpha = 0.22;
-    ctx.lineWidth = 14;
-    ctx.stroke();
+    ctx.globalAlpha = 0.22; ctx.lineWidth = 14; ctx.stroke();
     ctx.restore();
 
     ctx.restore();
@@ -1066,15 +1052,13 @@
     ctx.lineTo(s*0.15, s*0.75);
     ctx.lineTo(-s*0.75, s*0.25);
     ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
+    ctx.fill(); ctx.stroke();
 
     ctx.globalAlpha = 0.18;
     ctx.fillStyle = "rgba(255,255,255,0.9)";
     ctx.beginPath();
     ctx.arc(s*0.15, -s*0.25, s*0.25, 0, Math.PI*2);
     ctx.fill();
-
     ctx.restore();
   }
 
@@ -1138,7 +1122,6 @@
 
       const { x,y,w,h } = state.pool;
       it.x = clamp(it.x, x+14, x+w-14);
-
       if(it.y > y + h + 30){
         it.y = y + 8;
         it.x = x + w*0.5 + (Math.random()-0.5)*w*0.28;
@@ -1217,12 +1200,8 @@
   }
 
   function drawRipples(dt){
-    for(const r of state.ripples){
-      r.r += r.speed * dt;
-      r.a -= dt * 1.2;
-    }
+    for(const r of state.ripples){ r.r += r.speed * dt; r.a -= dt * 1.2; }
     state.ripples = state.ripples.filter(r=>r.a>0.02);
-
     ctx.save();
     for(const r of state.ripples){
       ctx.globalAlpha = r.a * 0.45;
@@ -1243,7 +1222,6 @@
       p.vy += 420 * dt;
     }
     state.particles = state.particles.filter(p=>p.t < p.life);
-
     ctx.save();
     for(const p of state.particles){
       const a = 1 - (p.t / p.life);
@@ -1257,7 +1235,7 @@
     ctx.restore();
   }
 
-  function drawTitleOverlay(){
+  function drawEndOverlay(){
     if(state.phase !== "ended") return;
     ctx.save();
     ctx.globalAlpha = 0.55;
@@ -1268,7 +1246,7 @@
     ctx.font = "900 44px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Noto Sans TC";
     ctx.textAlign = "center";
     ctx.fillText("時間到！", W/2, H*0.45);
-    ctx.font = "800 18px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Noto Sans TC";
+    ctx.font = "900 18px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Noto Sans TC";
     ctx.fillStyle = "rgba(255,255,255,0.78)";
     ctx.fillText("已寫入今日排行榜", W/2, H*0.45 + 34);
     ctx.restore();
@@ -1295,10 +1273,7 @@
 
     if(state.phase === "playing"){
       state.spawnAcc += dt * spawnRatePerSec();
-      while(state.spawnAcc >= 1){
-        spawnItem();
-        state.spawnAcc -= 1;
-      }
+      while(state.spawnAcc >= 1){ spawnItem(); state.spawnAcc -= 1; }
       if(state.items.length > 90) state.items.splice(0, state.items.length - 90);
       state.mult = scoreMultiplier();
       updateHUD();
@@ -1316,40 +1291,29 @@
       drawParticles(dt);
       drawNet(0);
     }
-    drawTitleOverlay();
+    drawEndOverlay();
   }
   requestAnimationFrame(tick);
 
   /**********************
-   * UI: Modal flow
+   * UI flow
    **********************/
-  function showModal(){
-    $("modal").style.display = "flex";
-    state.phase = "tutorial";
-  }
+  function showModal(){ $("modal").style.display = "flex"; state.phase = "tutorial"; }
   function hideModal(){ $("modal").style.display = "none"; }
 
-  $("btnStart").addEventListener("click", () => {
-    hideModal(); resetGame(); startGame();
-  });
-  $("btnQuickStart").addEventListener("click", () => {
-    hideModal(); resetGame(); startGame();
-  });
-  $("btnHow").addEventListener("click", () => {
-    setModeUI(); showModal();
-  });
+  $("btnStart").addEventListener("click", () => { hideModal(); resetGame(); startGame(); });
+  $("btnQuickStart").addEventListener("click", () => { hideModal(); resetGame(); startGame(); });
+  $("btnHow").addEventListener("click", () => { setModeUI(); showModal(); });
 
   $("btnLeaderboard").addEventListener("click", showLeaderboard);
   $("btnLB2").addEventListener("click", showLeaderboard);
   $("btnCloseLB").addEventListener("click", hideLeaderboard);
-
-  $("btnRestart").addEventListener("click", () => {
-    resetGame(); hideModal(); startGame();
-  });
+  $("btnRestart").addEventListener("click", () => { resetGame(); hideModal(); startGame(); });
 
   $("btnSoundHint").addEventListener("click", () => {
     ensureAudio();
     if(audioCtx.state === "suspended") audioCtx.resume().catch(()=>{});
+    applyVolumes();
     playBubble(state.combo || 0);
   });
 
@@ -1368,18 +1332,37 @@
     applyAudioToggles();
   });
 
-  $("lb").addEventListener("click", (e) => {
-    if(e.target === $("lb")) hideLeaderboard();
+  $("lb").addEventListener("click", (e) => { if(e.target === $("lb")) hideLeaderboard(); });
+
+  // ✅ sliders -> realtime volume change
+  $("sfxVol").addEventListener("input", () => {
+    ensureAudio();
+    if(audioCtx.state === "suspended") audioCtx.resume().catch(()=>{});
+    applyVolumes();
+    // 小預聽（避免一直吵，只有在調整到某些位置才發一顆）
+    if(Number($("sfxVol").value) % 10 === 0) playBubble(state.combo || 0);
+  });
+  $("bgmVol").addEventListener("input", () => {
+    ensureAudio();
+    if(audioCtx.state === "suspended") audioCtx.resume().catch(()=>{});
+    applyVolumes();
   });
 
   /**********************
    * Boot
    **********************/
   function boot(){
+    // load saved vol to UI first
+    const v = loadVolSettings();
+    $("sfxVol").value = String(v.sfx);
+    $("bgmVol").value = String(v.bgm);
+
     setModeUI();
-    applyAudioToggles();
     updateRotateLock();
     resetGame();
+
+    // audio toggles + apply volumes (no sound until user gesture)
+    applyAudioToggles();
     showModal();
   }
   boot();
