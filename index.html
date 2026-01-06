@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>裂縫水池：鹿粉撈撈祭（今日最終版）</title>
+  <title>裂縫水池：鹿粉撈撈祭（最終整合版）</title>
 
   <style>
     :root{
@@ -20,6 +20,10 @@
       color:var(--white);
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
       overflow:hidden;
+
+      /* ✅ LINE/iOS 文字自動放大修正（關鍵） */
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
     }
     .wrap{height:100%; display:grid; place-items:center; padding:14px;}
     .frame{
@@ -195,7 +199,7 @@
       100% { transform: translateY(0) scale(1);   filter: drop-shadow(0 0 0 rgba(255,255,255,.0)); }
     }
 
-    /* ✅ 整理：預設隱藏，直向才顯示 */
+    /* ✅ 直向鎖（預設隱藏，需要時才顯示） */
     .portrait-lock{
       position:absolute; inset:0;
       z-index:55;
@@ -244,6 +248,19 @@
       .liffbar{ right: 10px; top: 10px; }
     }
 
+    /* ✅ 手機橫向高度很矮時：面板自動縮＋可捲 */
+    @media (max-height: 520px){
+      .panel{
+        max-height: 82vh;
+        overflow: auto;
+        padding: 14px 14px 12px;
+      }
+      h1{ font-size: 18px; }
+      .desc{ font-size: 13px; line-height: 1.55; margin: 8px 0 10px; }
+      .btns{ margin-top: 10px; }
+      button{ padding: 10px 12px; border-radius: 14px; }
+    }
+
     /* 🌙 金魚之夜主題（更溫潤圓角 + 金色結算） */
     body.fish-night .frame{
       background: radial-gradient(circle at 50% 25%, rgba(255,235,190,.95) 0%, rgba(255,179,71,.92) 30%, rgba(140,70,0,.86) 62%, rgba(25,10,0,.95) 100%);
@@ -268,6 +285,30 @@
     }
     body.fish-night .rotate-icon{
       filter: drop-shadow(0 0 18px rgba(255,200,120,.9));
+    }
+
+    /* ⚡ 快速開始浮動按鈕 */
+    .quick-start{
+      position: fixed;
+      right: 16px;
+      bottom: 16px;
+      z-index: 80;
+      pointer-events: auto;
+    }
+    .quick-start button{
+      border-radius: 999px;
+      padding: 14px 18px;
+      font-weight: 900;
+      font-size: 14px;
+      background: linear-gradient(135deg, #0a1f3a, #153a6b);
+      color: #fff;
+      box-shadow: 0 12px 30px rgba(0,0,0,.35);
+      border: 1px solid rgba(255,255,255,.25);
+    }
+    body.fish-night .quick-start button{
+      background: linear-gradient(135deg, #ffdd99, #ffb347);
+      color: #5a3200;
+      box-shadow: 0 12px 30px rgba(120,70,0,.45);
     }
   </style>
 </head>
@@ -299,6 +340,11 @@
 
     <canvas id="c" width="1280" height="720"></canvas>
 
+    <!-- ⚡ 快速開始（看過教學後才顯示） -->
+    <div class="quick-start" id="quickStart">
+      <button>⚡ 快速開始</button>
+    </div>
+
     <div class="hud" aria-hidden="true">
       <div class="card">
         <div class="row">
@@ -329,13 +375,15 @@
       <div class="panel" role="dialog" aria-modal="true">
         <div class="title">
           <h1>🌌 裂縫水池：鹿粉撈撈祭</h1>
-          <div class="tag">今日最終版</div>
+          <div class="tag">最終整合版</div>
         </div>
+
+        <!-- ✅ 只保留玩法（精簡） -->
         <div class="desc">
-          ✅ 分數只會在「真的撈到」才增加（已修正自動加分）。<br/>
-          🕳️ <b>整點 100% 必觸發探索提示</b>：每到 <b>xx:00</b> 發布提示並刷新「整點回聲碎片」。<br/>
-          ⚡ <b>裂縫暴走</b>：每天 <b>12:00–14:00</b>（碎片密度↑、得分倍率↑；速度不變）。<br/>
-          🌙 <b>金魚之夜</b>：每天 <b>19:00–21:00</b>（金色主題／金色軌跡／金色跳字／輕鈴＋環境音／🌙排行標記／夜間稱號）。
+          <b>玩法</b>：移動網子，<b>按住</b>下網撈起碎片/金魚得分。<br/>
+          網子有耐久，歸零會破網並自動換新；<b>60 秒</b>結算。<br/>
+          請使用<b>橫向</b>遊玩（直向不可開始）。<br/>
+          鍵盤：<span class="kbd">R</span> 可重開。
         </div>
 
         <div class="rank">
@@ -349,11 +397,6 @@
           <button class="secondary" id="resetRankBtn">清空今日榜</button>
         </div>
 
-        <div class="small" style="margin-top:10px;">
-          操作：滑鼠/手指移動網子，<b>按住</b>下網撈起。<br/>
-          鍵盤：<span class="kbd">R</span> 重開（遊戲中可用）
-        </div>
-
         <div class="small" id="resultText" style="margin-top:10px;"></div>
       </div>
     </div>
@@ -365,6 +408,9 @@
 (() => {
   // ✅✅✅ 只改這一行：填入你的 LIFF ID（不是整段 LIFF URL）
   const LIFF_ID = "2008825801-LXHTWx5N";
+
+  // ✅ 教學只顯示一次
+  const LS_TUTORIAL_SEEN = "lulu_tutorial_seen_v1";
 
   // ===== LIFF =====
   const liffBar = document.getElementById('liffBar');
@@ -436,6 +482,7 @@
   const rankList = document.getElementById('rankList');
   const resultText = document.getElementById('resultText');
   const toast = document.getElementById('toast');
+  const quickStart = document.getElementById("quickStart");
 
   // ===== Helpers =====
   const rand = (a,b)=> a + Math.random()*(b-a);
@@ -594,7 +641,7 @@
   const maxDurability = 100;
   const GAME_SECONDS = 60;
 
-  // ✅ 重要：分數只在 catchShard/catchFish 內加
+  // ✅ 分數只在 catchShard/catchFish 內加
   let running=false, timeLeft=GAME_SECONDS, score=0;
   let combo=0, maxCombo=0, breaks=0, fishHits=0;
   let lastFishNight=false;
@@ -602,7 +649,7 @@
   const pointer = { x: W*0.5, y: H*0.55, pressed:false };
   const net = { x:pointer.x, y:pointer.y, r:38, down:false, durability:maxDurability, broken:false, cooldown:0 };
 
-  // 類型（速度已統一，不用 type.speed）
+  // 類型
   const shardTypes = [
     { key:"stardust", name:"星屑", score:1, dmg:[4,7],  rarity:0.70, color:"rgba(255,244,198,.95)", glow:"rgba(255,255,255,.75)" },
     { key:"prism",    name:"棱晶", score:2, dmg:[7,12], rarity:0.23, color:"rgba(222,210,255,.95)", glow:"rgba(210,255,250,.55)" },
@@ -629,7 +676,7 @@
   // ✅ 統一標準速度（慢速好瞄準）
   function makeShard(){
     const t = pickShardType();
-    const baseSp = rand(24, 36); // ✅ 初速
+    const baseSp = rand(24, 36); // 初速
     const ang = rand(0, Math.PI*2);
     return {
       kind:"shard",
@@ -663,7 +710,7 @@
   }
 
   function makeFish(){
-    const baseSp = rand(70, 95); // 金魚可略快，但仍好撈
+    const baseSp = rand(70, 95);
     const ang = rand(0, Math.PI*2);
     return { kind:"fish", x:rand(90,W-90), y:rand(140,H-90), vx:Math.cos(ang)*baseSp, vy:Math.sin(ang)*baseSp*0.55, r:rand(18,22), wiggle:rand(0,Math.PI*2), alive:true };
   }
@@ -700,7 +747,7 @@
   function resetGame(){
     running=true;
     timeLeft=GAME_SECONDS;
-    score=0; combo=0; maxCombo=0, breaks=0, fishHits=0;
+    score=0; combo=0; maxCombo=0; breaks=0; fishHits=0;
 
     net.x=W*0.5; net.y=H*0.55;
     net.down=false;
@@ -725,6 +772,9 @@
     setDurUI();
     updateModeUI(new Date());
 
+    // ✅ 遊戲中隱藏快速開始
+    quickStart.style.display = "none";
+
     showToast("鹿鹿：碎片就交給你了。");
   }
 
@@ -745,6 +795,9 @@
 
     resultText.innerHTML = `結算：<b>${score}</b> 分｜破網 <b>${breaks}</b> 次｜最高連擊 <b>${maxCombo}</b>｜金魚 <b>${fishHits}</b>｜稱號：<b>${displayTitle(score)}</b>${night ? " <b>🌙</b>" : ""}`;
     overlay.style.display="grid";
+
+    // ✅ 結算後顯示快速開始
+    quickStart.style.display = "block";
   }
 
   function triggerHourlyEvent(){
@@ -755,12 +808,12 @@
     showToast(msg + "\n✨整點回聲碎片已刷新！");
   }
 
-  // ===== 唯一加分入口（修正分數自增） =====
+  // ===== 唯一加分入口 =====
   function catchShard(s, nowDate){
     s.alive=false;
 
     const add = Math.round(s.type.score * scoreMult(nowDate));
-    score += add; // ✅ ONLY HERE
+    score += add;
 
     uiScore.textContent=score;
     uiTitle.textContent=displayTitle(score);
@@ -789,7 +842,7 @@
     fish=null;
 
     const add = Math.round(5 * scoreMult(nowDate));
-    score += add; // ✅ ONLY HERE
+    score += add;
 
     uiScore.textContent=score;
     uiTitle.textContent=displayTitle(score);
@@ -863,17 +916,24 @@
   });
 
   // ===== Buttons =====
-  startBtn.addEventListener('click', ()=>{
+  function startGameFromOverlay(){
     if (isPortrait()) {
       updateOrientationUI();
       showToast("🦒 鹿鹿：先橫向！裂縫方向會扭曲視界。");
       return;
     }
+
+    // ✅ 成功開始即視為看過教學
+    try { localStorage.setItem(LS_TUTORIAL_SEEN, "1"); } catch(_) {}
+
     overlay.style.display="none";
     resetGame();
     beep(660,0.06,"triangle",0.06);
     tryLockLandscape();
-  });
+  }
+
+  startBtn.addEventListener('click', startGameFromOverlay);
+  quickStart.addEventListener('click', startGameFromOverlay);
 
   muteBtn.addEventListener('click', ()=>{
     audioOn = !audioOn;
@@ -1096,7 +1156,7 @@
     for(const s of shards){ if(s.alive) drawShard(s); }
     if(fish && fish.alive) drawFish(fish);
 
-    // pops（A：夜間金色跳字）
+    // pops（夜間金色跳字）
     for(const p of pops){
       ctx.save();
       ctx.globalAlpha = clamp(p.t/0.7, 0, 1);
@@ -1225,8 +1285,20 @@
   }
 
   // ===== 初始顯示 =====
-  overlay.style.display="grid";
   renderRank();
+
+  // ✅ 第一次顯示教學；之後只留快速開始
+  let seen = false;
+  try { seen = localStorage.getItem(LS_TUTORIAL_SEEN) === "1"; } catch(_) {}
+
+  if (seen) {
+    overlay.style.display = "none";
+    quickStart.style.display = "block";
+    showToast("⚡ 點右下角「快速開始」即可開局");
+  } else {
+    overlay.style.display = "grid";
+    quickStart.style.display = "none";
+  }
 
   // ===== 主迴圈 =====
   requestAnimationFrame(tick);
