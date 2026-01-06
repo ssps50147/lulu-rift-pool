@@ -5,230 +5,121 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
   <title>裂縫水池：鹿粉撈撈祭</title>
   <style>
-    :root{
-      --panel: rgba(255,255,255,0.10);
-      --txt: rgba(255,255,255,0.92);
-      --muted: rgba(255,255,255,0.70);
-      --shadow: 0 12px 28px rgba(0,0,0,0.35);
-    }
-    html,body{
-      margin:0;height:100%;
-      background: radial-gradient(1200px 800px at 20% 10%, #1b2a5c 0%, #0b1020 55%, #060914 100%);
-      color:var(--txt);
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", Arial, sans-serif;
-      overflow:hidden;
-    }
+    :root{ --panel: rgba(255,255,255,0.10); --txt: rgba(255,255,255,0.92); --muted: rgba(255,255,255,0.70); --shadow: 0 12px 28px rgba(0,0,0,0.35); }
+    html,body{ margin:0;height:100%;background: radial-gradient(1200px 800px at 20% 10%, #1b2a5c 0%, #0b1020 55%, #060914 100%);color:var(--txt);font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", Arial, sans-serif;overflow:hidden;}
     #gameWrap{ position:fixed; inset:0; display:flex; align-items:center; justify-content:center; }
     canvas{ width:100vw; height:100vh; display:block; }
 
-    /* HUD */
     #hud{ position:fixed; inset:0; pointer-events:none; }
-    .chip{
-      display:inline-flex; align-items:center; gap:10px;
-      padding:10px 14px; border-radius:999px;
-      background: var(--panel);
-      box-shadow: var(--shadow);
-      border:1px solid rgba(255,255,255,0.08);
-      backdrop-filter: blur(10px);
-      font-weight:800;
-      letter-spacing:0.2px;
-    }
+    .chip{ display:inline-flex; align-items:center; gap:10px; padding:10px 14px; border-radius:999px; background: var(--panel); box-shadow: var(--shadow); border:1px solid rgba(255,255,255,0.08); backdrop-filter: blur(10px); font-weight:800; letter-spacing:0.2px; }
     #topLeft{ position:absolute; left:14px; top:14px; display:flex; gap:10px; flex-wrap:wrap; }
     #topRight{ position:absolute; right:14px; top:14px; display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end; }
     #bottomLeft{ position:absolute; left:14px; bottom:14px; display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end; }
     #bottomRight{ position:absolute; right:14px; bottom:14px; display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end; }
 
-    .btn{
-      pointer-events:auto;
-      cursor:pointer;
-      padding:12px 14px;
-      border-radius: 14px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.14), rgba(255,255,255,0.08));
-      border:1px solid rgba(255,255,255,0.12);
-      box-shadow: var(--shadow);
-      color:var(--txt);
-      font-weight:900;
-      display:inline-flex; align-items:center; gap:10px;
-      user-select:none;
-      transition: transform .08s ease;
-    }
+    .btn{ pointer-events:auto; cursor:pointer; padding:12px 14px; border-radius:14px; background: linear-gradient(180deg, rgba(255,255,255,0.14), rgba(255,255,255,0.08)); border:1px solid rgba(255,255,255,0.12); box-shadow: var(--shadow); color:var(--txt); font-weight:900; display:inline-flex; align-items:center; gap:10px; user-select:none; transition: transform .08s ease;}
     .btn:active{ transform: translateY(1px) scale(0.99); }
-    .btn.primary{
-      background: linear-gradient(180deg, rgba(126,231,255,0.28), rgba(126,231,255,0.12));
-      border-color: rgba(126,231,255,0.35);
-    }
+    .btn.primary{ background: linear-gradient(180deg, rgba(126,231,255,0.28), rgba(126,231,255,0.12)); border-color: rgba(126,231,255,0.35); }
     .btn.tiny{ padding:10px 12px; border-radius: 12px; font-weight:900; }
 
-    .badge{
-      display:inline-flex; align-items:center; gap:8px;
-      padding: 9px 12px; border-radius: 999px;
-      background: rgba(255,255,255,0.12);
-      border:1px solid rgba(255,255,255,0.12);
-      font-weight:900;
-      letter-spacing:0.2px;
-    }
+    .badge{ display:inline-flex; align-items:center; gap:8px; padding: 9px 12px; border-radius: 999px; background: rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.12); font-weight:900; letter-spacing:0.2px; }
 
-    /* Volume controls */
-    .volBox{
+    /* ✅ 音量面板：改成「右側浮動、可收合」，不再擋住中間遊戲區 */
+    #volDock{
+      position:fixed;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 35;
       pointer-events:auto;
-      display:flex; flex-direction:column; gap:8px;
-      padding:10px 12px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      align-items:flex-end;
+    }
+    .volToggle{
+      pointer-events:auto;
+      width: 44px;
+      height: 44px;
       border-radius: 14px;
-      background: rgba(255,255,255,0.10);
-      border:1px solid rgba(255,255,255,0.12);
-      backdrop-filter: blur(10px);
-      box-shadow: var(--shadow);
-      min-width: 220px;
-    }
-    .volRow{
-      display:flex; align-items:center; justify-content:space-between; gap:10px;
-      font-weight:900;
-      color: rgba(255,255,255,0.88);
-      font-size: 12.5px;
-    }
-    .volRow span{ color: rgba(255,255,255,0.78); font-weight:900; }
-    .volRow .val{ min-width: 32px; text-align:right; color: rgba(255,255,255,0.86); }
-    input[type="range"]{
-      width:100%;
-      accent-color: rgba(126,231,255,0.95);
-    }
-
-    /* Portrait lock */
-    #rotateLock{
-      position:fixed; inset:0;
-      display:none;
-      align-items:center; justify-content:center;
-      background: radial-gradient(900px 600px at 50% 20%, rgba(126,231,255,0.10), rgba(0,0,0,0.78));
-      z-index:50;
-      text-align:center;
-      padding:24px;
-    }
-    #rotateLock .card{
-      width:min(560px, 92vw);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      cursor:pointer;
+      user-select:none;
       background: rgba(255,255,255,0.10);
       border:1px solid rgba(255,255,255,0.14);
-      border-radius: 22px;
-      padding: 20px 18px;
-      box-shadow: var(--shadow);
       backdrop-filter: blur(10px);
-    }
-    #rotateLock h2{ margin:0 0 10px 0; font-size: 22px; }
-    #rotateLock p{ margin: 8px 0; color: var(--muted); line-height: 1.6; font-weight:800; }
-    #rotateLock .icon{ font-size: 40px; margin-bottom: 8px; opacity: 0.95; }
-
-    /* Modal */
-    #modal{
-      position:fixed; inset:0;
-      display:none;
-      align-items:center; justify-content:center;
-      z-index:40;
-      background: rgba(0,0,0,0.55);
-      padding: 18px;
-    }
-    #modal .panel{
-      width: min(760px, 92vw);
-      background: rgba(255,255,255,0.10);
-      border:1px solid rgba(255,255,255,0.16);
-      border-radius: 26px;
       box-shadow: var(--shadow);
+      font-weight: 900;
+    }
+    .volBox{
+      width: 260px;
+      pointer-events:auto;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      padding:12px 12px;
+      border-radius:16px;
+      background: rgba(10,12,18,0.35);
+      border:1px solid rgba(255,255,255,0.14);
       backdrop-filter: blur(12px);
-      overflow:hidden;
-      transform: scale(0.75);
-      transform-origin:center;
+      box-shadow: var(--shadow);
     }
-    #modal .head{
-      padding: 16px 18px;
-      display:flex; align-items:center; justify-content:space-between;
-      background: rgba(255,255,255,0.06);
-      border-bottom: 1px solid rgba(255,255,255,0.10);
-      gap: 12px;
-      flex-wrap: wrap;
+    .volBox.hidden{
+      display:none;
     }
+    .volRow{ display:flex; align-items:center; justify-content:space-between; gap:10px; font-weight:900; color: rgba(255,255,255,0.88); font-size:12.5px; }
+    .volRow span{ color: rgba(255,255,255,0.78); font-weight:900; }
+    .volRow .val{ min-width:32px; text-align:right; color: rgba(255,255,255,0.86); }
+    input[type="range"]{ width:100%; accent-color: rgba(126,231,255,0.95); }
+
+    /* 小螢幕橫向：面板自動縮窄避免遮住池子 */
+    @media (max-width: 860px){
+      #volDock{ right: 10px; }
+      .volBox{ width: 220px; }
+    }
+    @media (max-width: 720px){
+      .volBox{ width: 200px; }
+    }
+
+    #rotateLock{ position:fixed; inset:0; display:none; align-items:center; justify-content:center; background: radial-gradient(900px 600px at 50% 20%, rgba(126,231,255,0.10), rgba(0,0,0,0.78)); z-index:50; text-align:center; padding:24px; }
+    #rotateLock .card{ width:min(560px, 92vw); background: rgba(255,255,255,0.10); border:1px solid rgba(255,255,255,0.14); border-radius:22px; padding:20px 18px; box-shadow: var(--shadow); backdrop-filter: blur(10px); }
+    #rotateLock h2{ margin:0 0 10px 0; font-size:22px; }
+    #rotateLock p{ margin:8px 0; color: var(--muted); line-height:1.6; font-weight:800; }
+    #rotateLock .icon{ font-size:40px; margin-bottom:8px; opacity:0.95; }
+
+    #modal{ position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:40; background: rgba(0,0,0,0.55); padding:18px; }
+    #modal .panel{ width:min(760px, 92vw); background: rgba(255,255,255,0.10); border:1px solid rgba(255,255,255,0.16); border-radius:26px; box-shadow: var(--shadow); backdrop-filter: blur(12px); overflow:hidden; transform: scale(0.75); transform-origin:center; }
+    #modal .head{ padding:16px 18px; display:flex; align-items:center; justify-content:space-between; background: rgba(255,255,255,0.06); border-bottom:1px solid rgba(255,255,255,0.10); gap:12px; flex-wrap:wrap;}
     #modal .head .title{ display:flex; flex-direction:column; gap:2px; }
-    #modal .head h1{ margin:0; font-size: 20px; letter-spacing:0.3px; }
-    #modal .head .sub{ color: var(--muted); font-weight:800; font-size: 12.5px; }
-    #modal .body{ padding: 16px 18px 18px; }
-    #modal .body p{ margin: 10px 0; color: var(--muted); line-height: 1.7; font-weight:800; }
-    #modal .body ul{ margin: 10px 0 0 18px; padding:0; color: var(--muted); line-height: 1.75; font-weight:800;}
-    #modal .foot{
-      padding: 14px 18px 18px;
-      display:flex; align-items:center; justify-content:space-between; gap:12px;
-      flex-wrap:wrap;
-    }
-    #modal .foot .hint{
-      color: rgba(255,255,255,0.78);
-      font-weight:900;
-      font-size: 12.5px;
-      opacity: 0.95;
-    }
-    .kbd{
-      display:inline-flex; align-items:center; justify-content:center;
-      padding: 2px 8px;
-      border-radius: 8px;
-      border:1px solid rgba(255,255,255,0.16);
-      background: rgba(0,0,0,0.25);
-      font-weight:900;
-      font-size: 12px;
-      color: rgba(255,255,255,0.88);
-    }
+    #modal .head h1{ margin:0; font-size:20px; letter-spacing:0.3px; }
+    #modal .head .sub{ color: var(--muted); font-weight:800; font-size:12.5px; }
+    #modal .body{ padding:16px 18px 18px; }
+    #modal .body p{ margin:10px 0; color: var(--muted); line-height:1.7; font-weight:800; }
+    #modal .body ul{ margin:10px 0 0 18px; padding:0; color: var(--muted); line-height:1.75; font-weight:800; }
+    #modal .foot{ padding:14px 18px 18px; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+    #modal .foot .hint{ color: rgba(255,255,255,0.78); font-weight:900; font-size:12.5px; opacity:0.95; }
+    .kbd{ display:inline-flex; align-items:center; justify-content:center; padding:2px 8px; border-radius:8px; border:1px solid rgba(255,255,255,0.16); background: rgba(0,0,0,0.25); font-weight:900; font-size:12px; color: rgba(255,255,255,0.88); }
 
-    /* Leaderboard */
-    #lb{
-      position:fixed; inset:0;
-      display:none;
-      align-items:center; justify-content:center;
-      z-index:45;
-      background: rgba(0,0,0,0.55);
-      padding: 18px;
-    }
-    #lb .panel{
-      width: min(760px, 92vw);
-      background: rgba(255,255,255,0.10);
-      border:1px solid rgba(255,255,255,0.16);
-      border-radius: 26px;
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(12px);
-      overflow:hidden;
-    }
-    #lb .head{
-      padding: 16px 18px;
-      display:flex; align-items:center; justify-content:space-between;
-      background: rgba(255,255,255,0.06);
-      border-bottom: 1px solid rgba(255,255,255,0.10);
-    }
-    #lb h2{ margin:0; font-size: 18px; }
-    #lb .body{ padding: 14px 18px 18px; }
-    table{
-      width:100%;
-      border-collapse: collapse;
-      overflow:hidden;
-      border-radius: 16px;
-      border:1px solid rgba(255,255,255,0.10);
-      background: rgba(255,255,255,0.06);
-    }
-    th,td{
-      padding: 10px 10px;
-      border-bottom: 1px solid rgba(255,255,255,0.08);
-      font-weight:900;
-      font-size: 13px;
-      color: rgba(255,255,255,0.90);
-    }
+    #lb{ position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:45; background: rgba(0,0,0,0.55); padding:18px; }
+    #lb .panel{ width:min(760px, 92vw); background: rgba(255,255,255,0.10); border:1px solid rgba(255,255,255,0.16); border-radius:26px; box-shadow: var(--shadow); backdrop-filter: blur(12px); overflow:hidden; }
+    #lb .head{ padding:16px 18px; display:flex; align-items:center; justify-content:space-between; background: rgba(255,255,255,0.06); border-bottom:1px solid rgba(255,255,255,0.10); }
+    #lb h2{ margin:0; font-size:18px; }
+    #lb .body{ padding:14px 18px 18px; }
+    table{ width:100%; border-collapse:collapse; overflow:hidden; border-radius:16px; border:1px solid rgba(255,255,255,0.10); background: rgba(255,255,255,0.06); }
+    th,td{ padding:10px 10px; border-bottom:1px solid rgba(255,255,255,0.08); font-weight:900; font-size:13px; color: rgba(255,255,255,0.90); }
     th{ text-align:left; color: rgba(255,255,255,0.78); }
     tr:last-child td{ border-bottom:none; }
     .right{ text-align:right; }
     .muted{ color: var(--muted); font-weight:900; }
   </style>
-
-  <!-- ✅ LIFF 支援（只需改一行 LIFF_ID） -->
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
 
 <body>
-  <div id="gameWrap">
-    <canvas id="c"></canvas>
-  </div>
+  <div id="gameWrap"><canvas id="c"></canvas></div>
 
-  <!-- Portrait lock -->
   <div id="rotateLock">
     <div class="card">
       <div class="icon">📱↔️</div>
@@ -238,7 +129,6 @@
     </div>
   </div>
 
-  <!-- Tutorial modal -->
   <div id="modal">
     <div class="panel">
       <div class="head">
@@ -251,18 +141,15 @@
           <div class="btn tiny" id="btnSoundHint" title="建議開啟音量更好玩">🔊 建議開音量</div>
         </div>
       </div>
-
       <div class="body">
         <p>玩法：<b>按住（滑鼠/手指）</b>在水池下網，鬆開收網。收網時若碰到物件就能撈起得分！</p>
         <ul>
           <li>⏱️ 只有 <b>60 秒</b>，節奏要快但別亂：<b>撈到才算</b>。</li>
           <li>🧩 碎片：基礎得分；🐟 金魚：較高得分；🌙 金色金魚：夜間特別分數。</li>
           <li>🔥 連擊：連續成功撈起會提高連擊；若一趟空網就會斷連擊。</li>
-          <!-- ✅ 依你要求：紅框內兩句已完全移除，不再出現在教學視窗 -->
         </ul>
         <p class="muted">小提示：開啟音量遊玩會更有趣 ✨</p>
       </div>
-
       <div class="foot">
         <div class="hint">操作：<span class="kbd">按住</span> 下網｜<span class="kbd">鬆開</span> 收網｜<span class="kbd">R</span> 重新開始</div>
         <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end;">
@@ -271,14 +158,11 @@
         </div>
       </div>
     </div>
-
-    <!-- 右下角快速開始 -->
-    <div id="quickStartWrap" style="position:fixed; right:14px; bottom:14px; z-index:60;">
+    <div style="position:fixed; right:14px; bottom:14px; z-index:60;">
       <div class="btn primary" id="btnQuickStart">⚡ 快速開始</div>
     </div>
   </div>
 
-  <!-- Leaderboard -->
   <div id="lb">
     <div class="panel">
       <div class="head">
@@ -288,14 +172,7 @@
       <div class="body">
         <div class="muted" style="margin-bottom:10px;">只保留「今天」的資料（跨日會自動歸零）。</div>
         <table>
-          <thead>
-            <tr>
-              <th style="width:64px;">名次</th>
-              <th>名稱</th>
-              <th class="right">分數</th>
-              <th class="right">模式</th>
-            </tr>
-          </thead>
+          <thead><tr><th style="width:64px;">名次</th><th>名稱</th><th class="right">分數</th><th class="right">模式</th></tr></thead>
           <tbody id="lbBody"></tbody>
         </table>
         <div class="muted" style="margin-top:12px;">你可以在結算時輸入暱稱（LIFF 會優先使用 LINE 名稱）。</div>
@@ -303,14 +180,12 @@
     </div>
   </div>
 
-  <!-- HUD -->
   <div id="hud">
     <div id="topLeft">
       <div class="chip">⏱️ <span id="timeLeft">60.0</span>s</div>
       <div class="chip">🏁 分數 <span id="score">0</span></div>
       <div class="chip">🔥 連擊 <span id="combo">0</span></div>
     </div>
-
     <div id="topRight">
       <div class="badge" id="modeBadge">🫧 休閒模式</div>
       <div class="chip">倍率 x<span id="mult">1.0</span></div>
@@ -319,21 +194,6 @@
     <div id="bottomLeft">
       <div class="btn tiny" id="btnMute">🔈 音效：開</div>
       <div class="btn tiny" id="btnBgm">🎵 BGM：開</div>
-
-      <!-- ✅ 新增：可手動調整音量 -->
-      <div class="volBox" aria-label="volume controls">
-        <div class="volRow">
-          <span>🫧 點擊音效音量</span>
-          <span class="val" id="sfxVal">50</span>
-        </div>
-        <input id="sfxVol" type="range" min="0" max="100" step="1" value="50" />
-
-        <div class="volRow" style="margin-top:2px;">
-          <span>🎵 環境 BGM 音量</span>
-          <span class="val" id="bgmVal">25</span>
-        </div>
-        <input id="bgmVol" type="range" min="0" max="100" step="1" value="25" />
-      </div>
     </div>
 
     <div id="bottomRight">
@@ -343,14 +203,22 @@
     </div>
   </div>
 
+  <!-- ✅ 新位置：右側中間「浮動音量面板（可收合）」 -->
+  <div id="volDock" aria-label="volume dock">
+    <div class="volToggle" id="volToggle" title="音量設定">🎚️</div>
+    <div class="volBox" id="volBox">
+      <div class="volRow"><span>🫧 點擊音效音量</span><span class="val" id="sfxVal">40</span></div>
+      <input id="sfxVol" type="range" min="0" max="100" step="1" value="40" />
+      <div class="volRow" style="margin-top:2px;"><span>🎵 環境 BGM 音量</span><span class="val" id="bgmVal">35</span></div>
+      <input id="bgmVol" type="range" min="0" max="100" step="1" value="35" />
+      <div class="muted" style="font-size:12px; line-height:1.4;">提示：點「🎚️」可收合，避免擋到撈撈。</div>
+    </div>
+  </div>
+
 <script>
 (() => {
-  /**********************
-   * LIFF (one-line ID)
-   **********************/
-  const LIFF_ID = "2008825801-LXHTWx5N"; // ✅ 只需改這一行
+  const LIFF_ID = "2008825801-LXHTWx5N";
   let liffProfile = null;
-
   async function initLIFF(){
     try{
       if(!window.liff || !LIFF_ID || LIFF_ID.includes("YOUR_LIFF_ID")) return;
@@ -362,55 +230,34 @@
   }
   initLIFF();
 
-  /**********************
-   * Helpers
-   **********************/
   const $ = (id) => document.getElementById(id);
   const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
-
-  function todayKey(){
-    const d = new Date();
-    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-  }
-  function nowEvent(){
-    const h = new Date().getHours();
-    return { frenzy: (h>=12 && h<14), night: (h>=19 && h<21), hour:h };
-  }
+  const todayKey = ()=>{ const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
+  const nowEvent = ()=>{ const h=new Date().getHours(); return { frenzy:(h>=12&&h<14), night:(h>=19&&h<21), hour:h }; };
 
   /**********************
-   * Audio (no external files)
-   * ✅ 新增：手動可調整 SFX / BGM 音量（並記住設定）
+   * Audio
    **********************/
-  let audioCtx = null;
-  let sfxEnabled = true;
-  let bgmEnabled = true;
+  let audioCtx=null, sfxEnabled=true, bgmEnabled=true;
+  let sfxGainNode=null, bgmGainNode=null;
 
-  let sfxGainNode = null;
-  let bgmGainNode = null;
-
-  // slider 0~100 -> gain mapping (conservative, not noisy)
-  const SFX_GAIN_MAX = 0.22;   // 最高仍不會太吵
-  const BGM_GAIN_MAX = 0.06;   // ✅ 比你原本覺得大聲的更低上限
+  const SFX_GAIN_MAX = 0.16;
+  const BGM_GAIN_MAX = 0.09;
 
   function loadVolSettings(){
-    const sfx = Number(localStorage.getItem("rr_sfx_vol") ?? "50");
-    const bgm = Number(localStorage.getItem("rr_bgm_vol") ?? "25"); // ✅ 預設更小聲
-    return {
-      sfx: clamp(isFinite(sfx)?sfx:50, 0, 100),
-      bgm: clamp(isFinite(bgm)?bgm:25, 0, 100),
-    };
+    const sfx = Number(localStorage.getItem("rr_sfx_vol") ?? "40");
+    const bgm = Number(localStorage.getItem("rr_bgm_vol") ?? "35");
+    return { sfx: clamp(isFinite(sfx)?sfx:40,0,100), bgm: clamp(isFinite(bgm)?bgm:35,0,100) };
   }
-  function saveVolSettings(sfx, bgm){
+  function saveVolSettings(sfx,bgm){
     localStorage.setItem("rr_sfx_vol", String(sfx));
     localStorage.setItem("rr_bgm_vol", String(bgm));
   }
-  function sliderToGain(val01_100, maxGain){
-    const t = clamp(val01_100, 0, 100) / 100;
-    // 非線性曲線：小音量更細緻
+  function sliderToGain(v, maxGain){
+    const t = clamp(v,0,100)/100;
     const curved = Math.pow(t, 1.6);
     return curved * maxGain;
   }
-
   function ensureAudio(){
     if(audioCtx) return;
     const AC = window.AudioContext || window.webkitAudioContext;
@@ -420,25 +267,16 @@
     sfxGainNode.connect(audioCtx.destination);
     bgmGainNode.connect(audioCtx.destination);
   }
-
   function applyVolumes(){
     const sfxV = Number($("sfxVol").value);
     const bgmV = Number($("bgmVol").value);
-
     $("sfxVal").textContent = String(sfxV);
     $("bgmVal").textContent = String(bgmV);
-
-    saveVolSettings(sfxV, bgmV);
-
-    if(!audioCtx || !sfxGainNode || !bgmGainNode) return;
-
-    const sfxGain = sfxEnabled ? sliderToGain(sfxV, SFX_GAIN_MAX) : 0.0001;
-    const bgmGain = bgmEnabled ? sliderToGain(bgmV, BGM_GAIN_MAX) : 0.0001;
-
-    sfxGainNode.gain.value = sfxGain;
-    bgmGainNode.gain.value = bgmGain;
+    saveVolSettings(sfxV,bgmV);
+    if(!audioCtx||!sfxGainNode||!bgmGainNode) return;
+    sfxGainNode.gain.value = sfxEnabled ? sliderToGain(sfxV, SFX_GAIN_MAX) : 0.0001;
+    bgmGainNode.gain.value = bgmEnabled ? sliderToGain(bgmV, BGM_GAIN_MAX) : 0.0001;
   }
-
   function applyAudioToggles(){
     $("btnMute").textContent = sfxEnabled ? "🔈 音效：開" : "🔇 音效：關";
     $("btnBgm").textContent  = bgmEnabled ? "🎵 BGM：開" : "🎵 BGM：關";
@@ -446,12 +284,10 @@
     applyVolumes();
   }
 
-  // Bubble SFX (combo pitch up)
   function playBubble(comboLevel){
     if(!sfxEnabled) return;
     ensureAudio();
     const t0 = audioCtx.currentTime;
-
     const c = clamp(comboLevel, 0, 40);
     const base = 220 + c * 12;
     const f1 = base * (1.0 + Math.random()*0.04);
@@ -462,799 +298,568 @@
     const g = audioCtx.createGain();
     const lp = audioCtx.createBiquadFilter();
 
-    o1.type = "sine";
-    o2.type = "triangle";
-    o1.frequency.setValueAtTime(f1, t0);
-    o2.frequency.setValueAtTime(f2, t0);
+    o1.type="sine"; o2.type="triangle";
+    o1.frequency.setValueAtTime(f1,t0);
+    o2.frequency.setValueAtTime(f2,t0);
 
-    lp.type = "lowpass";
-    lp.frequency.setValueAtTime(1400, t0);
-    lp.Q.value = 0.9;
+    lp.type="lowpass"; lp.frequency.setValueAtTime(1400,t0); lp.Q.value=0.9;
 
-    // envelope (quiet by design; final loudness is controlled by slider)
-    g.gain.setValueAtTime(0.0001, t0);
-    g.gain.exponentialRampToValueAtTime(0.55, t0 + 0.012);
-    g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.12);
+    g.gain.setValueAtTime(0.0001,t0);
+    g.gain.exponentialRampToValueAtTime(0.50,t0+0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001,t0+0.12);
 
-    o1.frequency.exponentialRampToValueAtTime(f1 * 0.75, t0 + 0.09);
-    o2.frequency.exponentialRampToValueAtTime(f2 * 0.80, t0 + 0.10);
+    o1.frequency.exponentialRampToValueAtTime(f1*0.75,t0+0.09);
+    o2.frequency.exponentialRampToValueAtTime(f2*0.80,t0+0.10);
 
-    o1.connect(lp); o2.connect(lp);
-    lp.connect(g);
-    g.connect(sfxGainNode);
-
+    o1.connect(lp); o2.connect(lp); lp.connect(g); g.connect(sfxGainNode);
     o1.start(t0); o2.start(t0);
-    o1.stop(t0 + 0.14); o2.stop(t0 + 0.14);
+    o1.stop(t0+0.14); o2.stop(t0+0.14);
   }
 
-  // Procedural BGM
-  let bgmTimer = null;
-  let bgmNodes = [];
-  let bgmStep = 0;
-
+  let bgmTimer=null, bgmNodes=[], bgmStep=0;
   function stopBGM(){
-    if(bgmTimer){ clearInterval(bgmTimer); bgmTimer = null; }
-    for(const n of bgmNodes){
-      try{ n.stop && n.stop(); }catch(e){}
-      try{ n.disconnect && n.disconnect(); }catch(e){}
-    }
-    bgmNodes = [];
+    if(bgmTimer){ clearInterval(bgmTimer); bgmTimer=null; }
+    for(const n of bgmNodes){ try{ n.stop&&n.stop(); }catch(e){} try{ n.disconnect&&n.disconnect(); }catch(e){} }
+    bgmNodes=[];
   }
-
   function startBGM(){
     if(!bgmEnabled) return;
     ensureAudio();
     if(bgmTimer) return;
 
-    const bpm = 122;
-    const stepMs = (60_000 / bpm) / 2; // 1/8
+    const bpm=122;
+    const stepMs=(60000/bpm)/2;
+    const prog=[{root:0,type:"maj"},{root:5,type:"maj"},{root:7,type:"maj"},{root:9,type:"min"}];
+    const scale=[0,2,4,7,9,12,14,16];
+    const midiToHz=(m)=>440*Math.pow(2,(m-69)/12);
+    const chordTones=(r,t)=> (t==="min"?[0,3,7]:[0,4,7]).map(x=>r+x);
 
-    const prog = [
-      { root: 0,  type: "maj" },
-      { root: 5,  type: "maj" },
-      { root: 7,  type: "maj" },
-      { root: 9,  type: "min" },
-    ];
-    const scale = [0,2,4,7,9,12,14,16];
-
-    const midiToHz = (m)=> 440 * Math.pow(2, (m-69)/12);
-    const chordTones = (rootMidi, type) => (type==="min" ? [0,3,7] : [0,4,7]).map(x=>rootMidi+x);
-
-    function pluck(freq, dur=0.13, when=audioCtx.currentTime){
-      const o = audioCtx.createOscillator();
-      const g = audioCtx.createGain();
-      const hp = audioCtx.createBiquadFilter();
-
-      o.type = "triangle";
-      o.frequency.setValueAtTime(freq, when);
-
-      hp.type = "highpass";
-      hp.frequency.setValueAtTime(120, when);
-      hp.Q.value = 0.6;
-
-      g.gain.setValueAtTime(0.0001, when);
-      g.gain.exponentialRampToValueAtTime(0.22, when + 0.01);
-      g.gain.exponentialRampToValueAtTime(0.0001, when + dur);
-
+    function pluck(freq,dur=0.13,when=audioCtx.currentTime){
+      const o=audioCtx.createOscillator();
+      const g=audioCtx.createGain();
+      const hp=audioCtx.createBiquadFilter();
+      o.type="triangle"; o.frequency.setValueAtTime(freq,when);
+      hp.type="highpass"; hp.frequency.setValueAtTime(120,when); hp.Q.value=0.6;
+      g.gain.setValueAtTime(0.0001,when);
+      g.gain.exponentialRampToValueAtTime(0.22,when+0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001,when+dur);
       o.connect(hp); hp.connect(g); g.connect(bgmGainNode);
-      o.start(when); o.stop(when + dur + 0.02);
+      o.start(when); o.stop(when+dur+0.02);
       bgmNodes.push(o,g,hp);
     }
-
-    function pad(freq, dur=0.55, when=audioCtx.currentTime){
-      const o = audioCtx.createOscillator();
-      const g = audioCtx.createGain();
-      const lp = audioCtx.createBiquadFilter();
-
-      o.type = "sine";
-      o.frequency.setValueAtTime(freq, when);
-
-      lp.type = "lowpass";
-      lp.frequency.setValueAtTime(900, when);
-      lp.Q.value = 0.5;
-
-      g.gain.setValueAtTime(0.0001, when);
-      g.gain.exponentialRampToValueAtTime(0.12, when + 0.05);
-      g.gain.exponentialRampToValueAtTime(0.0001, when + dur);
-
+    function pad(freq,dur=0.55,when=audioCtx.currentTime){
+      const o=audioCtx.createOscillator();
+      const g=audioCtx.createGain();
+      const lp=audioCtx.createBiquadFilter();
+      o.type="sine"; o.frequency.setValueAtTime(freq,when);
+      lp.type="lowpass"; lp.frequency.setValueAtTime(900,when); lp.Q.value=0.5;
+      g.gain.setValueAtTime(0.0001,when);
+      g.gain.exponentialRampToValueAtTime(0.12,when+0.05);
+      g.gain.exponentialRampToValueAtTime(0.0001,when+dur);
       o.connect(lp); lp.connect(g); g.connect(bgmGainNode);
-      o.start(when); o.stop(when + dur + 0.03);
+      o.start(when); o.stop(when+dur+0.03);
       bgmNodes.push(o,g,lp);
     }
 
-    bgmTimer = setInterval(() => {
-      const t = audioCtx.currentTime;
-      const bar = Math.floor(bgmStep / 16);
-      const p = prog[bar % prog.length];
+    bgmTimer=setInterval(()=>{
+      const t=audioCtx.currentTime;
+      const bar=Math.floor(bgmStep/16);
+      const p=prog[bar%prog.length];
+      const rootMidi=60+p.root;
+      const tones=chordTones(rootMidi,p.type);
 
-      const rootMidi = 60 + p.root;
-      const tones = chordTones(rootMidi, p.type);
-
-      if(bgmStep % 8 === 0){
-        for(const m of tones) pad(midiToHz(m - 12), 0.62, t);
+      if(bgmStep%8===0){
+        for(const m of tones) pad(midiToHz(m-12),0.62,t);
       }
-
-      const should = (bgmStep % 2 === 0) && Math.random() < 0.82;
+      const should=(bgmStep%2===0)&&Math.random()<0.82;
       if(should){
-        const pick = scale[(bgmStep/2 + (Math.random()<0.25?1:0)) % scale.length | 0];
-        const note = rootMidi + pick + (Math.random()<0.18?12:0);
-        pluck(midiToHz(note), 0.14 + Math.random()*0.06, t);
+        const pick=scale[(bgmStep/2+(Math.random()<0.25?1:0))%scale.length|0];
+        const note=rootMidi+pick+(Math.random()<0.18?12:0);
+        pluck(midiToHz(note),0.14+Math.random()*0.06,t);
       }
 
-      bgmStep = (bgmStep + 1) % 64;
-      if(bgmNodes.length > 220) bgmNodes.splice(0, 130);
+      bgmStep=(bgmStep+1)%64;
+      if(bgmNodes.length>220) bgmNodes.splice(0,130);
     }, stepMs);
   }
 
   /**********************
-   * Canvas / Game State
+   * Canvas / Game
    **********************/
-  const canvas = $("c");
-  const ctx = canvas.getContext("2d");
-
-  let W=1280, H=720, DPR=1;
+  const canvas=$("c");
+  const ctx=canvas.getContext("2d");
+  let W=1280,H=720,DPR=1;
   function resize(){
-    DPR = Math.min(2, window.devicePixelRatio || 1);
-    W = Math.max(640, Math.floor(window.innerWidth));
-    H = Math.max(360, Math.floor(window.innerHeight));
-    canvas.width = Math.floor(W * DPR);
-    canvas.height = Math.floor(H * DPR);
+    DPR=Math.min(2,window.devicePixelRatio||1);
+    W=Math.max(640,Math.floor(window.innerWidth));
+    H=Math.max(360,Math.floor(window.innerHeight));
+    canvas.width=Math.floor(W*DPR);
+    canvas.height=Math.floor(H*DPR);
     ctx.setTransform(DPR,0,0,DPR,0,0);
   }
   window.addEventListener("resize", resize);
   resize();
 
-  function isLandscape(){ return window.innerWidth >= window.innerHeight; }
+  const isLandscape=()=>window.innerWidth>=window.innerHeight;
+  const state={
+    phase:"boot",
+    tLeft:60, score:0, combo:0, bestCombo:0, mult:1,
+    modeName:"休閒模式", modeIcon:"🫧", modeTag:"DAY", event:nowEvent(),
+    lastTs:0, pointerDown:false, pointerX:0,
+    net:{x:0,y:0,targetY:0,phase:"idle",radius:48,speed:920,depth:0.70,caughtThisRun:0},
+    pool:{x:0,y:0,w:0,h:0},
+    items:[], spawnAcc:0, ripples:[], particles:[]
+  };
+
   function updateRotateLock(){
-    const locked = !isLandscape();
+    const locked=!isLandscape();
     $("rotateLock").style.display = locked ? "flex" : "none";
-    if(locked){
-      if(state.phase === "playing") state.phase = "paused_by_rotate";
-    }else{
-      if(state.phase === "paused_by_rotate"){
-        state.phase = "playing";
-        state.lastTs = performance.now();
-      }
-    }
+    if(locked){ if(state.phase==="playing") state.phase="paused_by_rotate"; }
+    else{ if(state.phase==="paused_by_rotate"){ state.phase="playing"; state.lastTs=performance.now(); } }
   }
   window.addEventListener("resize", updateRotateLock);
   window.addEventListener("orientationchange", updateRotateLock);
 
-  const state = {
-    phase: "boot",
-    tLeft: 60.0,
-    score: 0,
-    combo: 0,
-    bestCombo: 0,
-    mult: 1.0,
-    modeName: "休閒模式",
-    modeIcon: "🫧",
-    modeTag: "DAY",
-    event: nowEvent(),
-    lastTs: 0,
-    pointerDown: false,
-    pointerX: 0,
-    net: { x:0, y:0, targetY:0, phase:"idle", radius:48, speed:920, depth:0.70, caughtThisRun:0 },
-    pool: { x:0, y:0, w:0, h:0 },
-    items: [],
-    spawnAcc: 0,
-    ripples: [],
-    particles: [],
-  };
-
   function setModeUI(){
-    state.event = nowEvent();
-    if(state.event.night){
-      state.modeName = "金魚之夜"; state.modeIcon = "🌙"; state.modeTag = "NIGHT";
-    }else if(state.event.frenzy){
-      state.modeName = "裂縫暴走"; state.modeIcon = "🔥"; state.modeTag = "FRENZY";
-    }else{
-      state.modeName = "休閒模式"; state.modeIcon = "🫧"; state.modeTag = "DAY";
-    }
-    $("modeBadge").textContent = `${state.modeIcon} ${state.modeName}`;
-    $("eventBadge").textContent = `${state.modeIcon} ${state.modeName}`;
-    $("eventSub").textContent = "60 秒撈取挑戰｜按住下網撈碎片／金魚得分";
+    state.event=nowEvent();
+    if(state.event.night){ state.modeName="金魚之夜"; state.modeIcon="🌙"; state.modeTag="NIGHT"; }
+    else if(state.event.frenzy){ state.modeName="裂縫暴走"; state.modeIcon="🔥"; state.modeTag="FRENZY"; }
+    else{ state.modeName="休閒模式"; state.modeIcon="🫧"; state.modeTag="DAY"; }
+    $("modeBadge").textContent=`${state.modeIcon} ${state.modeName}`;
+    $("eventBadge").textContent=`${state.modeIcon} ${state.modeName}`;
+    $("eventSub").textContent="60 秒撈取挑戰｜按住下網撈碎片／金魚得分";
   }
 
   function poolLayout(){
-    const pad = 14;
-    const topHud = 74;
-    const bottomHud = 74;
-    const x = pad;
-    const y = pad + topHud;
-    const w = W - pad*2;
-    const h = H - (pad + topHud) - (pad + bottomHud);
-    state.pool = { x, y, w, h };
-    state.net.x = x + w/2;
-    state.net.y = y + 14;
-    state.net.targetY = y + h * state.net.depth;
-    state.net.radius = clamp(w * 0.035, 34, 62);
+    const pad=14, topHud=74, bottomHud=74;
+    const x=pad, y=pad+topHud, w=W-pad*2, h=H-(pad+topHud)-(pad+bottomHud);
+    state.pool={x,y,w,h};
+    state.net.x=x+w/2; state.net.y=y+14; state.net.targetY=y+h*state.net.depth;
+    state.net.radius=clamp(w*0.035,34,62);
   }
-  poolLayout();
-  window.addEventListener("resize", poolLayout);
+  poolLayout(); window.addEventListener("resize", poolLayout);
 
   function updateHUD(){
-    $("timeLeft").textContent = state.tLeft.toFixed(1);
-    $("score").textContent = Math.floor(state.score);
-    $("combo").textContent = state.combo;
-    $("mult").textContent = state.mult.toFixed(1);
+    $("timeLeft").textContent=state.tLeft.toFixed(1);
+    $("score").textContent=Math.floor(state.score);
+    $("combo").textContent=state.combo;
+    $("mult").textContent=state.mult.toFixed(1);
   }
 
   function resetGame(){
     setModeUI();
-    state.phase = "ready";
-    state.tLeft = 60.0;
-    state.score = 0;
-    state.combo = 0;
-    state.bestCombo = 0;
-    state.mult = 1.0;
-    state.items = [];
-    state.spawnAcc = 0;
-    state.ripples = [];
-    state.particles = [];
-    state.net.phase = "idle";
-    state.net.caughtThisRun = 0;
+    state.phase="ready";
+    state.tLeft=60; state.score=0; state.combo=0; state.bestCombo=0; state.mult=1;
+    state.items=[]; state.spawnAcc=0; state.ripples=[]; state.particles=[];
+    state.net.phase="idle"; state.net.caughtThisRun=0;
     updateHUD();
   }
 
   function startGame(){
     if(!isLandscape()){ updateRotateLock(); return; }
     ensureAudio();
-    if(audioCtx.state === "suspended"){ audioCtx.resume().catch(()=>{}); }
-
+    if(audioCtx.state==="suspended") audioCtx.resume().catch(()=>{});
     setModeUI();
-    state.phase = "playing";
-    state.tLeft = 60.0;
-    state.score = 0;
-    state.combo = 0;
-    state.bestCombo = 0;
-    state.items = [];
-    state.spawnAcc = 0;
-    state.ripples = [];
-    state.particles = [];
-    state.net.phase = "idle";
-    state.net.caughtThisRun = 0;
-    state.lastTs = performance.now();
-
+    state.phase="playing";
+    state.tLeft=60; state.score=0; state.combo=0; state.bestCombo=0;
+    state.items=[]; state.spawnAcc=0; state.ripples=[]; state.particles=[];
+    state.net.phase="idle"; state.net.caughtThisRun=0;
+    state.lastTs=performance.now();
     startBGM();
     applyAudioToggles();
     updateHUD();
   }
 
   function endGame(){
-    state.phase = "ended";
-    const info = getPlayerInfo();
-    saveScoreToday({
-      name: info.name,
-      score: state.score,
-      mode: state.modeName,
-      tag: state.modeTag,
-      bestCombo: state.bestCombo,
-      at: Date.now()
-    });
+    state.phase="ended";
+    const info=getPlayerInfo();
+    saveScoreToday({name:info.name, score:state.score, mode:state.modeName, tag:state.modeTag, bestCombo:state.bestCombo, at:Date.now()});
     showLeaderboard();
   }
 
-  /**********************
-   * Leaderboard (today only)
-   **********************/
   function lbStorageKey(){ return `rr_leaderboard_${todayKey()}`; }
-
   function loadTodayLB(){
-    const key = lbStorageKey();
-    let arr = [];
-    try{
-      arr = JSON.parse(localStorage.getItem(key) || "[]");
-      if(!Array.isArray(arr)) arr = [];
-    }catch(e){ arr = []; }
-    // cleanup other days
-    try{
-      for(let i=0;i<localStorage.length;i++){
-        const k = localStorage.key(i);
-        if(k && k.startsWith("rr_leaderboard_") && k !== key) localStorage.removeItem(k);
-      }
-    }catch(e){}
+    const key=lbStorageKey();
+    let arr=[];
+    try{ arr=JSON.parse(localStorage.getItem(key)||"[]"); if(!Array.isArray(arr)) arr=[]; }catch(e){ arr=[]; }
+    try{ for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k&&k.startsWith("rr_leaderboard_")&&k!==key) localStorage.removeItem(k);} }catch(e){}
     return arr;
   }
-
   function saveScoreToday(entry){
-    const key = lbStorageKey();
-    const arr = loadTodayLB();
+    const key=lbStorageKey();
+    const arr=loadTodayLB();
     arr.push(entry);
-    arr.sort((a,b)=>b.score - a.score);
-    localStorage.setItem(key, JSON.stringify(arr.slice(0, 20)));
+    arr.sort((a,b)=>b.score-a.score);
+    localStorage.setItem(key, JSON.stringify(arr.slice(0,20)));
   }
-
-  function escapeHtml(s){
-    return String(s).replace(/[&<>"']/g, m => ({
-      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
-    }[m]));
-  }
-
+  function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m])); }
   function renderLB(){
-    const arr = loadTodayLB();
-    const tbody = $("lbBody");
-    tbody.innerHTML = "";
-    if(arr.length === 0){
-      const tr = document.createElement("tr");
-      tr.innerHTML = `<td colspan="4" class="muted">今天還沒有成績，快去撈一把！</td>`;
-      tbody.appendChild(tr);
-      return;
+    const arr=loadTodayLB();
+    const tbody=$("lbBody"); tbody.innerHTML="";
+    if(arr.length===0){
+      const tr=document.createElement("tr");
+      tr.innerHTML=`<td colspan="4" class="muted">今天還沒有成績，快去撈一把！</td>`;
+      tbody.appendChild(tr); return;
     }
-    arr.forEach((e, idx) => {
-      const modeLabel = e.tag==="NIGHT" ? "🌙 夜間" : (e.tag==="FRENZY" ? "🔥 暴走" : "🫧 白天");
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${idx+1}</td>
-        <td>${escapeHtml(e.name || "鹿粉")}</td>
-        <td class="right">${Math.floor(e.score)}</td>
-        <td class="right">${modeLabel}</td>
-      `;
+    arr.forEach((e,idx)=>{
+      const modeLabel=e.tag==="NIGHT"?"🌙 夜間":(e.tag==="FRENZY"?"🔥 暴走":"🫧 白天");
+      const tr=document.createElement("tr");
+      tr.innerHTML=`<td>${idx+1}</td><td>${escapeHtml(e.name||"鹿粉")}</td><td class="right">${Math.floor(e.score)}</td><td class="right">${modeLabel}</td>`;
       tbody.appendChild(tr);
     });
   }
-  function showLeaderboard(){ renderLB(); $("lb").style.display = "flex"; }
-  function hideLeaderboard(){ $("lb").style.display = "none"; }
+  function showLeaderboard(){ renderLB(); $("lb").style.display="flex"; }
+  function hideLeaderboard(){ $("lb").style.display="none"; }
 
   function getPlayerInfo(){
-    const last = localStorage.getItem("rr_last_name") || "";
-    let name = (liffProfile && liffProfile.displayName) ? liffProfile.displayName : last;
-    if(!name) name = prompt("輸入暱稱（排行榜用）", "鹿粉") || "鹿粉";
-    name = name.trim().slice(0, 12) || "鹿粉";
+    const last=localStorage.getItem("rr_last_name")||"";
+    let name=(liffProfile&&liffProfile.displayName)?liffProfile.displayName:last;
+    if(!name) name=(prompt("輸入暱稱（排行榜用）","鹿粉")||"鹿粉");
+    name=name.trim().slice(0,12)||"鹿粉";
     localStorage.setItem("rr_last_name", name);
     return { name };
   }
 
-  /**********************
-   * Input
-   **********************/
   function setPointerFromEvent(e){
-    const rect = canvas.getBoundingClientRect();
-    const x = (("touches" in e) ? e.touches[0].clientX : e.clientX) - rect.left;
-    const y = (("touches" in e) ? e.touches[0].clientY : e.clientY) - rect.top;
-    return { x: clamp(x, 0, W), y: clamp(y, 0, H) };
+    const rect=canvas.getBoundingClientRect();
+    const x=(("touches"in e)?e.touches[0].clientX:e.clientX)-rect.left;
+    const y=(("touches"in e)?e.touches[0].clientY:e.clientY)-rect.top;
+    return { x:clamp(x,0,W), y:clamp(y,0,H) };
+  }
+
+  function addRipple(x,y,str=1){ state.ripples.push({x,y,r:6,a:0.9*str,speed:220*str}); }
+  function addParticles(x,y,type){
+    const n=type==="fragment"?8:12;
+    for(let i=0;i<n;i++){
+      state.particles.push({x,y,vx:(Math.random()-0.5)*220,vy:(Math.random()-0.6)*240,life:0.55+Math.random()*0.35,t:0,type});
+    }
   }
 
   function pointerDown(e){
-    if(state.phase !== "playing") return;
-    if(!isLandscape()) return;
+    if(state.phase!=="playing"||!isLandscape()) return;
     e.preventDefault();
-    const p = setPointerFromEvent(e);
-    state.pointerDown = true;
-    state.pointerX = p.x;
-
-    if(state.net.phase === "idle"){
-      state.net.phase = "down";
-      state.net.caughtThisRun = 0;
-      state.net.x = clamp(p.x, state.pool.x+20, state.pool.x+state.pool.w-20);
-      state.net.y = state.pool.y + 12;
-      state.net.targetY = state.pool.y + state.pool.h * state.net.depth;
-      addRipple(state.net.x, state.pool.y + 18, 0.6);
+    const p=setPointerFromEvent(e);
+    state.pointerDown=true; state.pointerX=p.x;
+    if(state.net.phase==="idle"){
+      state.net.phase="down";
+      state.net.caughtThisRun=0;
+      state.net.x=clamp(p.x,state.pool.x+20,state.pool.x+state.pool.w-20);
+      state.net.y=state.pool.y+12;
+      state.net.targetY=state.pool.y+state.pool.h*state.net.depth;
+      addRipple(state.net.x, state.pool.y+18, 0.6);
     }
   }
-
   function pointerMove(e){
-    if(state.phase !== "playing") return;
-    if(!state.pointerDown) return;
-    const p = setPointerFromEvent(e);
-    state.pointerX = p.x;
-    state.net.x = clamp(p.x, state.pool.x+20, state.pool.x+state.pool.w-20);
+    if(state.phase!=="playing"||!state.pointerDown) return;
+    const p=setPointerFromEvent(e);
+    state.pointerX=p.x;
+    state.net.x=clamp(p.x,state.pool.x+20,state.pool.x+state.pool.w-20);
   }
-
   function pointerUp(){
-    if(state.phase !== "playing") return;
-    if(!state.pointerDown) return;
-    state.pointerDown = false;
-    if(state.net.phase === "down"){
-      state.net.phase = "up";
-      addRipple(state.net.x, state.net.y, 0.9);
-    }
+    if(state.phase!=="playing"||!state.pointerDown) return;
+    state.pointerDown=false;
+    if(state.net.phase==="down"){ state.net.phase="up"; addRipple(state.net.x,state.net.y,0.9); }
   }
 
   canvas.addEventListener("mousedown", pointerDown);
   window.addEventListener("mousemove", pointerMove);
   window.addEventListener("mouseup", pointerUp);
-
   canvas.addEventListener("touchstart", pointerDown, { passive:false });
   canvas.addEventListener("touchmove", pointerMove, { passive:false });
   canvas.addEventListener("touchend", pointerUp, { passive:false });
   canvas.addEventListener("touchcancel", pointerUp, { passive:false });
 
-  window.addEventListener("keydown", (e) => {
-    const k = e.key.toLowerCase();
-    if(k === "r"){ resetGame(); hideModal(); startGame(); }
-    if(k === "m"){ sfxEnabled = !sfxEnabled; applyAudioToggles(); }
-    if(k === "b"){ bgmEnabled = !bgmEnabled; applyAudioToggles(); }
+  window.addEventListener("keydown",(e)=>{
+    const k=e.key.toLowerCase();
+    if(k==="r"){ resetGame(); hideModal(); startGame(); }
+    if(k==="m"){ sfxEnabled=!sfxEnabled; applyAudioToggles(); }
+    if(k==="b"){ bgmEnabled=!bgmEnabled; applyAudioToggles(); }
+    if(k==="v"){ toggleVolBox(); }
   });
 
-  /**********************
-   * Spawning / scoring
-   **********************/
   function spawnRatePerSec(){
-    let r = 2.7;
-    if(state.event.frenzy) r *= 1.65;
-    if(state.event.night) r *= 1.25;
+    let r=2.7;
+    if(state.event.frenzy) r*=1.65;
+    if(state.event.night) r*=1.25;
     return r;
   }
   function scoreMultiplier(){
-    let m = 1.0 + clamp(state.combo, 0, 30) * 0.03;
-    if(state.event.frenzy) m *= 1.35;
+    let m=1.0+clamp(state.combo,0,30)*0.03;
+    if(state.event.frenzy) m*=1.35;
     return m;
   }
   function spawnItem(){
-    const { x, y, w } = state.pool;
-    const crackX = x + w*0.5 + (Math.random()-0.5)*w*0.28;
-    const spawnY = y + 8 + Math.random()*10;
+    const {x,y,w}=state.pool;
+    const crackX=x+w*0.5+(Math.random()-0.5)*w*0.28;
+    const spawnY=y+8+Math.random()*10;
 
-    let type = "fragment";
-    let pFish = state.event.night ? 0.26 : 0.18;
-    if(state.event.frenzy) pFish += 0.06;
+    let type="fragment";
+    let pFish=state.event.night?0.26:0.18;
+    if(state.event.frenzy) pFish+=0.06;
+    const roll=Math.random();
+    if(roll<pFish) type=(state.event.night&&Math.random()<0.52)?"goldfish":"fish";
 
-    const roll = Math.random();
-    if(roll < pFish){
-      type = state.event.night && Math.random() < 0.52 ? "goldfish" : "fish";
-    }
+    const baseSpeed=35+Math.random()*55;
+    const drift=(Math.random()-0.5)*22;
+    const size=(type==="fragment")?(10+Math.random()*10):(14+Math.random()*10);
+    const val=(type==="fragment")?80:(type==="fish"?160:260);
 
-    const baseSpeed = 35 + Math.random()*55;
-    const drift = (Math.random()-0.5)*22;
-
-    const size = (type==="fragment") ? (10 + Math.random()*10) : (14 + Math.random()*10);
-    const val = (type==="fragment") ? 80 : (type==="fish" ? 160 : 260);
-
-    state.items.push({
-      type,
-      x: crackX, y: spawnY,
-      vx: drift, vy: baseSpeed,
-      size, val,
-      wobble: Math.random()*Math.PI*2,
-      caught: false,
-    });
+    state.items.push({type,x:crackX,y:spawnY,vx:drift,vy:baseSpeed,size,val,wobble:Math.random()*Math.PI*2,caught:false});
   }
-
   function tryCatch(){
-    const net = state.net;
-    const r = net.radius;
-    let caught = 0;
-
+    const net=state.net;
+    const r=net.radius;
     for(const it of state.items){
       if(it.caught) continue;
-      const dx = it.x - net.x;
-      const dy = it.y - net.y;
-      if(Math.hypot(dx, dy) < r * 0.92){
-        it.caught = true;
-        caught++;
+      const dx=it.x-net.x, dy=it.y-net.y;
+      if(Math.hypot(dx,dy) < r*0.92){
+        it.caught=true;
         net.caughtThisRun++;
-        const m = scoreMultiplier();
-        state.mult = m;
-        state.score += it.val * m;
-        state.combo += 1;
-        state.bestCombo = Math.max(state.bestCombo, state.combo);
-
+        const m=scoreMultiplier();
+        state.mult=m;
+        state.score += it.val*m;
+        state.combo++;
+        state.bestCombo=Math.max(state.bestCombo,state.combo);
         playBubble(state.combo);
-        addParticles(it.x, it.y, it.type);
+        addParticles(it.x,it.y,it.type);
       }
     }
-    return caught;
   }
 
-  /**********************
-   * FX
-   **********************/
-  function addRipple(x,y, strength=1){
-    state.ripples.push({ x, y, r: 6, a: 0.9*strength, speed: 220*strength });
-  }
-  function addParticles(x,y,type){
-    const n = type==="fragment" ? 8 : 12;
-    for(let i=0;i<n;i++){
-      state.particles.push({
-        x, y,
-        vx: (Math.random()-0.5)*220,
-        vy: (Math.random()-0.6)*240,
-        life: 0.55 + Math.random()*0.35,
-        t: 0,
-        type
-      });
-    }
-  }
-
-  /**********************
-   * Rendering
-   **********************/
   function roundRect(x,y,w,h,r){
-    const rr = Math.min(r, w/2, h/2);
+    const rr=Math.min(r,w/2,h/2);
     ctx.beginPath();
-    ctx.moveTo(x+rr, y);
-    ctx.arcTo(x+w, y, x+w, y+h, rr);
-    ctx.arcTo(x+w, y+h, x, y+h, rr);
-    ctx.arcTo(x, y+h, x, y, rr);
-    ctx.arcTo(x, y, x+w, y, rr);
+    ctx.moveTo(x+rr,y);
+    ctx.arcTo(x+w,y,x+w,y+h,rr);
+    ctx.arcTo(x+w,y+h,x,y+h,rr);
+    ctx.arcTo(x,y+h,x,y,rr);
+    ctx.arcTo(x,y,x+w,y,rr);
     ctx.closePath();
   }
-
   function drawBackground(){
-    const { frenzy, night } = state.event;
-    const g = ctx.createLinearGradient(0, 0, 0, H);
-    if(night){ g.addColorStop(0, "#0a0f18"); g.addColorStop(1, "#1c1b2a"); }
-    else if(frenzy){ g.addColorStop(0, "#1a1430"); g.addColorStop(1, "#0a0d18"); }
-    else{ g.addColorStop(0, "#0b1020"); g.addColorStop(1, "#070a14"); }
-    ctx.fillStyle = g;
-    ctx.fillRect(0,0,W,H);
-
+    const {frenzy,night}=state.event;
+    const g=ctx.createLinearGradient(0,0,0,H);
+    if(night){ g.addColorStop(0,"#0a0f18"); g.addColorStop(1,"#1c1b2a"); }
+    else if(frenzy){ g.addColorStop(0,"#1a1430"); g.addColorStop(1,"#0a0d18"); }
+    else{ g.addColorStop(0,"#0b1020"); g.addColorStop(1,"#070a14"); }
+    ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
     ctx.save();
     ctx.globalAlpha = night ? 0.28 : 0.18;
     ctx.fillStyle = night ? "#ffd36a" : "#7ee7ff";
     for(let i=0;i<70;i++){
-      const x = (i*97 + (performance.now()*0.01)) % W;
-      const y = (i*53) % H;
-      const s = 1 + (i%5)*0.5;
-      ctx.fillRect(x, y, s, s);
+      const x=(i*97+(performance.now()*0.01))%W;
+      const y=(i*53)%H;
+      const s=1+(i%5)*0.5;
+      ctx.fillRect(x,y,s,s);
     }
     ctx.restore();
   }
-
   function drawPool(){
-    const { x,y,w,h } = state.pool;
-    const { frenzy, night } = state.event;
-
+    const {x,y,w,h}=state.pool;
+    const {frenzy,night}=state.event;
     ctx.save();
-    ctx.fillStyle = "rgba(255,255,255,0.06)";
-    ctx.strokeStyle = "rgba(255,255,255,0.16)";
-    ctx.lineWidth = 2;
-    roundRect(x, y, w, h, 22);
+    ctx.fillStyle="rgba(255,255,255,0.06)";
+    ctx.strokeStyle="rgba(255,255,255,0.16)";
+    ctx.lineWidth=2;
+    roundRect(x,y,w,h,22);
     ctx.fill(); ctx.stroke();
 
-    const wg = ctx.createLinearGradient(0, y, 0, y+h);
-    if(night){ wg.addColorStop(0, "rgba(255,211,106,0.14)"); wg.addColorStop(1, "rgba(80,40,12,0.18)"); }
-    else if(frenzy){ wg.addColorStop(0, "rgba(255,106,122,0.12)"); wg.addColorStop(1, "rgba(40,20,60,0.20)"); }
-    else{ wg.addColorStop(0, "rgba(126,231,255,0.14)"); wg.addColorStop(1, "rgba(20,60,90,0.18)"); }
-
-    ctx.fillStyle = wg;
-    roundRect(x+8, y+8, w-16, h-16, 18);
+    const wg=ctx.createLinearGradient(0,y,0,y+h);
+    if(night){ wg.addColorStop(0,"rgba(255,211,106,0.14)"); wg.addColorStop(1,"rgba(80,40,12,0.18)"); }
+    else if(frenzy){ wg.addColorStop(0,"rgba(255,106,122,0.12)"); wg.addColorStop(1,"rgba(40,20,60,0.20)"); }
+    else{ wg.addColorStop(0,"rgba(126,231,255,0.14)"); wg.addColorStop(1,"rgba(20,60,90,0.18)"); }
+    ctx.fillStyle=wg;
+    roundRect(x+8,y+8,w-16,h-16,18);
     ctx.fill();
 
-    // crack
-    const cx = x + w*0.5;
+    const cx=x+w*0.5;
     ctx.save();
-    ctx.translate(cx, y+18);
-    ctx.globalAlpha = 0.9;
+    ctx.translate(cx,y+18);
+    ctx.globalAlpha=0.9;
     ctx.strokeStyle = night ? "rgba(255,211,106,0.75)" : (frenzy ? "rgba(255,106,122,0.70)" : "rgba(126,231,255,0.70)");
-    ctx.lineWidth = 3.5;
-    ctx.lineCap = "round";
+    ctx.lineWidth=3.5;
+    ctx.lineCap="round";
     ctx.beginPath();
-    const len = w*0.18;
-    ctx.moveTo(-len*0.55, 0);
-    ctx.lineTo(-len*0.22, 8);
-    ctx.lineTo(0, -4);
-    ctx.lineTo(len*0.18, 10);
-    ctx.lineTo(len*0.55, 2);
+    const len=w*0.18;
+    ctx.moveTo(-len*0.55,0);
+    ctx.lineTo(-len*0.22,8);
+    ctx.lineTo(0,-4);
+    ctx.lineTo(len*0.18,10);
+    ctx.lineTo(len*0.55,2);
     ctx.stroke();
-    ctx.globalAlpha = 0.22; ctx.lineWidth = 14; ctx.stroke();
+    ctx.globalAlpha=0.22; ctx.lineWidth=14; ctx.stroke();
     ctx.restore();
-
     ctx.restore();
   }
-
   function drawFragment(x,y,s){
-    ctx.save();
-    ctx.translate(x,y);
-    ctx.rotate(Math.sin((x+y)*0.01 + performance.now()*0.002)*0.6);
-    ctx.globalAlpha = 0.92;
-
-    const night = state.event.night;
-    ctx.fillStyle = night ? "rgba(255,211,106,0.90)" : "rgba(126,231,255,0.92)";
-    ctx.strokeStyle = "rgba(255,255,255,0.55)";
-    ctx.lineWidth = 1.2;
-
+    ctx.save(); ctx.translate(x,y);
+    ctx.rotate(Math.sin((x+y)*0.01+performance.now()*0.002)*0.6);
+    ctx.globalAlpha=0.92;
+    const night=state.event.night;
+    ctx.fillStyle= night ? "rgba(255,211,106,0.90)" : "rgba(126,231,255,0.92)";
+    ctx.strokeStyle="rgba(255,255,255,0.55)";
+    ctx.lineWidth=1.2;
     ctx.beginPath();
-    ctx.moveTo(-s*0.6, -s*0.2);
-    ctx.lineTo(0, -s*0.75);
-    ctx.lineTo(s*0.7, -s*0.05);
-    ctx.lineTo(s*0.15, s*0.75);
-    ctx.lineTo(-s*0.75, s*0.25);
+    ctx.moveTo(-s*0.6,-s*0.2);
+    ctx.lineTo(0,-s*0.75);
+    ctx.lineTo(s*0.7,-s*0.05);
+    ctx.lineTo(s*0.15,s*0.75);
+    ctx.lineTo(-s*0.75,s*0.25);
     ctx.closePath();
     ctx.fill(); ctx.stroke();
-
-    ctx.globalAlpha = 0.18;
-    ctx.fillStyle = "rgba(255,255,255,0.9)";
+    ctx.globalAlpha=0.18;
+    ctx.fillStyle="rgba(255,255,255,0.9)";
     ctx.beginPath();
-    ctx.arc(s*0.15, -s*0.25, s*0.25, 0, Math.PI*2);
+    ctx.arc(s*0.15,-s*0.25,s*0.25,0,Math.PI*2);
     ctx.fill();
     ctx.restore();
   }
-
   function drawFish(x,y,s,isGold){
-    ctx.save();
-    ctx.translate(x,y);
-    ctx.rotate(Math.sin((x+y)*0.01 + performance.now()*0.002)*0.2);
-
-    const body = isGold ? "rgba(255,211,106,0.92)" : "rgba(170,255,210,0.90)";
-    const fin  = isGold ? "rgba(255,174,70,0.90)" : "rgba(120,240,200,0.85)";
-    const eye  = "rgba(0,0,0,0.55)";
-
-    ctx.globalAlpha = 0.96;
-    ctx.fillStyle = body;
+    ctx.save(); ctx.translate(x,y);
+    ctx.rotate(Math.sin((x+y)*0.01+performance.now()*0.002)*0.2);
+    const body=isGold?"rgba(255,211,106,0.92)":"rgba(170,255,210,0.90)";
+    const fin =isGold?"rgba(255,174,70,0.90)":"rgba(120,240,200,0.85)";
+    const eye ="rgba(0,0,0,0.55)";
+    ctx.globalAlpha=0.96;
+    ctx.fillStyle=body;
     ctx.beginPath();
-    ctx.ellipse(0, 0, s*0.85, s*0.55, 0, 0, Math.PI*2);
+    ctx.ellipse(0,0,s*0.85,s*0.55,0,0,Math.PI*2);
     ctx.fill();
-
-    ctx.fillStyle = fin;
+    ctx.fillStyle=fin;
     ctx.beginPath();
-    ctx.moveTo(-s*0.9, 0);
-    ctx.lineTo(-s*1.35, -s*0.45);
-    ctx.lineTo(-s*1.25, 0);
-    ctx.lineTo(-s*1.35, s*0.45);
+    ctx.moveTo(-s*0.9,0);
+    ctx.lineTo(-s*1.35,-s*0.45);
+    ctx.lineTo(-s*1.25,0);
+    ctx.lineTo(-s*1.35,s*0.45);
     ctx.closePath();
     ctx.fill();
-
-    ctx.globalAlpha = 0.75;
-    ctx.beginPath();
-    ctx.moveTo(0, -s*0.1);
-    ctx.quadraticCurveTo(s*0.15, -s*0.75, s*0.65, -s*0.2);
-    ctx.closePath();
-    ctx.fill();
-
-    ctx.globalAlpha = 0.9;
-    ctx.fillStyle = "rgba(255,255,255,0.9)";
-    ctx.beginPath();
-    ctx.arc(s*0.38, -s*0.10, s*0.14, 0, Math.PI*2);
-    ctx.fill();
-    ctx.fillStyle = eye;
-    ctx.beginPath();
-    ctx.arc(s*0.42, -s*0.10, s*0.07, 0, Math.PI*2);
-    ctx.fill();
-
+    ctx.globalAlpha=0.9;
+    ctx.fillStyle="rgba(255,255,255,0.9)";
+    ctx.beginPath(); ctx.arc(s*0.38,-s*0.10,s*0.14,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle=eye;
+    ctx.beginPath(); ctx.arc(s*0.42,-s*0.10,s*0.07,0,Math.PI*2); ctx.fill();
     if(isGold && state.event.night){
-      ctx.globalAlpha = 0.95;
-      ctx.fillStyle = "rgba(255,255,255,0.9)";
-      ctx.font = `900 ${Math.floor(s*1.0)}px ui-sans-serif, system-ui`;
-      ctx.textAlign = "center";
+      ctx.globalAlpha=0.95;
+      ctx.fillStyle="rgba(255,255,255,0.9)";
+      ctx.font=`900 ${Math.floor(s*1.0)}px ui-sans-serif, system-ui`;
+      ctx.textAlign="center";
       ctx.fillText("🌙", s*1.1, -s*0.65);
     }
     ctx.restore();
   }
-
   function drawItems(dt){
     for(const it of state.items){
       if(it.caught) continue;
-      it.wobble += dt * 2.2;
-      it.x += it.vx * dt + Math.sin(it.wobble) * 10 * dt;
-      it.y += it.vy * dt;
-
-      const { x,y,w,h } = state.pool;
-      it.x = clamp(it.x, x+14, x+w-14);
-      if(it.y > y + h + 30){
-        it.y = y + 8;
-        it.x = x + w*0.5 + (Math.random()-0.5)*w*0.28;
-        it.vx = (Math.random()-0.5)*22;
-        it.vy = 35 + Math.random()*55;
+      it.wobble += dt*2.2;
+      it.x += it.vx*dt + Math.sin(it.wobble)*10*dt;
+      it.y += it.vy*dt;
+      const {x,y,w,h}=state.pool;
+      it.x=clamp(it.x,x+14,x+w-14);
+      if(it.y>y+h+30){
+        it.y=y+8;
+        it.x=x+w*0.5+(Math.random()-0.5)*w*0.28;
+        it.vx=(Math.random()-0.5)*22;
+        it.vy=35+Math.random()*55;
       }
-
-      if(it.type === "fragment") drawFragment(it.x, it.y, it.size);
-      else if(it.type === "fish") drawFish(it.x, it.y, it.size, false);
-      else drawFish(it.x, it.y, it.size, true);
+      if(it.type==="fragment") drawFragment(it.x,it.y,it.size);
+      else if(it.type==="fish") drawFish(it.x,it.y,it.size,false);
+      else drawFish(it.x,it.y,it.size,true);
     }
   }
-
   function drawNet(dt){
-    const net = state.net;
-    const { x,y,w } = state.pool;
-
-    if(net.phase === "down"){
-      net.y += net.speed * dt;
+    const net=state.net;
+    const {x,y,w}=state.pool;
+    if(net.phase==="down"){
+      net.y += net.speed*dt;
       tryCatch();
-      if(net.y >= net.targetY){
-        net.y = net.targetY;
-        if(!state.pointerDown) net.phase = "up";
-      }
-    }else if(net.phase === "up"){
-      net.y -= net.speed * dt;
+      if(net.y>=net.targetY){ net.y=net.targetY; if(!state.pointerDown) net.phase="up"; }
+    }else if(net.phase==="up"){
+      net.y -= net.speed*dt;
       tryCatch();
-      if(net.y <= y + 12){
-        net.y = y + 12;
-        net.phase = "idle";
-        if(net.caughtThisRun === 0){
-          state.combo = 0;
-          state.mult = scoreMultiplier();
-        }
-        net.caughtThisRun = 0;
+      if(net.y<=y+12){
+        net.y=y+12; net.phase="idle";
+        if(net.caughtThisRun===0){ state.combo=0; state.mult=scoreMultiplier(); }
+        net.caughtThisRun=0;
       }
     }
 
     ctx.save();
-    ctx.globalAlpha = 0.85;
-    ctx.strokeStyle = "rgba(255,255,255,0.65)";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(net.x, y - 18);
-    ctx.lineTo(net.x, net.y - net.radius*0.9);
-    ctx.stroke();
+    ctx.globalAlpha=0.85;
+    ctx.strokeStyle="rgba(255,255,255,0.65)";
+    ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(net.x,y-18); ctx.lineTo(net.x, net.y - net.radius*0.9); ctx.stroke();
 
-    ctx.globalAlpha = 0.95;
+    ctx.globalAlpha=0.95;
     ctx.strokeStyle = state.event.night ? "rgba(255,211,106,0.90)" : "rgba(126,231,255,0.90)";
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.ellipse(net.x, net.y, net.radius, net.radius*0.75, 0, 0, Math.PI*2);
-    ctx.stroke();
+    ctx.lineWidth=3;
+    ctx.beginPath(); ctx.ellipse(net.x, net.y, net.radius, net.radius*0.75, 0, 0, Math.PI*2); ctx.stroke();
 
-    ctx.globalAlpha = 0.35;
-    ctx.strokeStyle = "rgba(255,255,255,0.55)";
-    ctx.lineWidth = 1;
-    for(let a=0; a<Math.PI; a+=Math.PI/6){
+    ctx.globalAlpha=0.35;
+    ctx.strokeStyle="rgba(255,255,255,0.55)";
+    ctx.lineWidth=1;
+    for(let a=0;a<Math.PI;a+=Math.PI/6){
       ctx.beginPath();
-      ctx.moveTo(net.x, net.y);
-      ctx.lineTo(net.x + Math.cos(a)*net.radius, net.y + Math.sin(a)*net.radius*0.75);
+      ctx.moveTo(net.x,net.y);
+      ctx.lineTo(net.x+Math.cos(a)*net.radius, net.y+Math.sin(a)*net.radius*0.75);
       ctx.stroke();
     }
     ctx.restore();
 
-    if(net.phase === "idle" && state.phase==="playing"){
-      const px = clamp(state.pointerX || (x+w/2), x+20, x+w-20);
+    if(net.phase==="idle" && state.phase==="playing"){
+      const px=clamp(state.pointerX||(x+w/2), x+20, x+w-20);
       ctx.save();
-      ctx.globalAlpha = 0.18;
-      ctx.fillStyle = "rgba(255,255,255,0.7)";
-      ctx.beginPath();
-      ctx.arc(px, y+16, 8, 0, Math.PI*2);
-      ctx.fill();
+      ctx.globalAlpha=0.18;
+      ctx.fillStyle="rgba(255,255,255,0.7)";
+      ctx.beginPath(); ctx.arc(px, y+16, 8, 0, Math.PI*2); ctx.fill();
       ctx.restore();
     }
   }
-
   function drawRipples(dt){
-    for(const r of state.ripples){ r.r += r.speed * dt; r.a -= dt * 1.2; }
+    for(const r of state.ripples){ r.r += r.speed*dt; r.a -= dt*1.2; }
     state.ripples = state.ripples.filter(r=>r.a>0.02);
     ctx.save();
     for(const r of state.ripples){
-      ctx.globalAlpha = r.a * 0.45;
+      ctx.globalAlpha=r.a*0.45;
       ctx.strokeStyle = state.event.night ? "rgba(255,211,106,0.85)" : "rgba(126,231,255,0.85)";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.ellipse(r.x, r.y, r.r, r.r*0.55, 0, 0, Math.PI*2);
-      ctx.stroke();
+      ctx.lineWidth=2;
+      ctx.beginPath(); ctx.ellipse(r.x,r.y,r.r,r.r*0.55,0,0,Math.PI*2); ctx.stroke();
     }
     ctx.restore();
   }
-
   function drawParticles(dt){
     for(const p of state.particles){
       p.t += dt;
-      p.x += p.vx * dt;
-      p.y += p.vy * dt;
-      p.vy += 420 * dt;
+      p.x += p.vx*dt;
+      p.y += p.vy*dt;
+      p.vy += 420*dt;
     }
     state.particles = state.particles.filter(p=>p.t < p.life);
     ctx.save();
     for(const p of state.particles){
-      const a = 1 - (p.t / p.life);
-      ctx.globalAlpha = a * 0.8;
-      let col = "rgba(126,231,255,0.9)";
-      if(p.type === "fish") col = "rgba(180,255,220,0.9)";
-      if(p.type === "goldfish") col = "rgba(255,211,106,0.95)";
-      ctx.fillStyle = col;
-      ctx.fillRect(p.x-2, p.y-2, 4, 4);
+      const a=1-(p.t/p.life);
+      ctx.globalAlpha=a*0.8;
+      let col="rgba(126,231,255,0.9)";
+      if(p.type==="fish") col="rgba(180,255,220,0.9)";
+      if(p.type==="goldfish") col="rgba(255,211,106,0.95)";
+      ctx.fillStyle=col;
+      ctx.fillRect(p.x-2,p.y-2,4,4);
     }
     ctx.restore();
   }
-
   function drawEndOverlay(){
-    if(state.phase !== "ended") return;
+    if(state.phase!=="ended") return;
     ctx.save();
-    ctx.globalAlpha = 0.55;
-    ctx.fillStyle = "rgba(0,0,0,0.45)";
-    ctx.fillRect(0,0,W,H);
-    ctx.globalAlpha = 1.0;
-    ctx.fillStyle = "rgba(255,255,255,0.92)";
-    ctx.font = "900 44px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Noto Sans TC";
-    ctx.textAlign = "center";
+    ctx.globalAlpha=0.55; ctx.fillStyle="rgba(0,0,0,0.45)"; ctx.fillRect(0,0,W,H);
+    ctx.globalAlpha=1.0; ctx.fillStyle="rgba(255,255,255,0.92)";
+    ctx.font="900 44px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Noto Sans TC";
+    ctx.textAlign="center";
     ctx.fillText("時間到！", W/2, H*0.45);
-    ctx.font = "900 18px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Noto Sans TC";
-    ctx.fillStyle = "rgba(255,255,255,0.78)";
-    ctx.fillText("已寫入今日排行榜", W/2, H*0.45 + 34);
+    ctx.font="900 18px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Noto Sans TC";
+    ctx.fillStyle="rgba(255,255,255,0.78)";
+    ctx.fillText("已寫入今日排行榜", W/2, H*0.45+34);
     ctx.restore();
   }
 
-  /**********************
-   * Main loop
-   **********************/
   function tick(ts){
     requestAnimationFrame(tick);
     updateRotateLock();
@@ -1262,107 +867,100 @@
     const dt = state.lastTs ? Math.min(0.033, (ts - state.lastTs)/1000) : 0;
     state.lastTs = ts;
 
-    if(state.phase === "playing"){
+    if(state.phase==="playing"){
       state.tLeft -= dt;
-      if(state.tLeft <= 0){
-        state.tLeft = 0;
-        updateHUD();
-        endGame();
-      }
+      if(state.tLeft<=0){ state.tLeft=0; updateHUD(); endGame(); }
     }
-
-    if(state.phase === "playing"){
+    if(state.phase==="playing"){
       state.spawnAcc += dt * spawnRatePerSec();
-      while(state.spawnAcc >= 1){ spawnItem(); state.spawnAcc -= 1; }
-      if(state.items.length > 90) state.items.splice(0, state.items.length - 90);
+      while(state.spawnAcc>=1){ spawnItem(); state.spawnAcc -= 1; }
+      if(state.items.length>90) state.items.splice(0, state.items.length-90);
       state.mult = scoreMultiplier();
       updateHUD();
     }
 
     drawBackground();
     drawPool();
-    if(state.phase === "playing" || state.phase === "ended"){
-      drawItems(dt);
-      drawRipples(dt);
-      drawParticles(dt);
-      drawNet(dt);
+    if(state.phase==="playing" || state.phase==="ended"){
+      drawItems(dt); drawRipples(dt); drawParticles(dt); drawNet(dt);
     }else{
-      drawRipples(dt);
-      drawParticles(dt);
-      drawNet(0);
+      drawRipples(dt); drawParticles(dt); drawNet(0);
     }
     drawEndOverlay();
   }
   requestAnimationFrame(tick);
 
-  /**********************
-   * UI flow
-   **********************/
-  function showModal(){ $("modal").style.display = "flex"; state.phase = "tutorial"; }
-  function hideModal(){ $("modal").style.display = "none"; }
+  function showModal(){ $("modal").style.display="flex"; state.phase="tutorial"; }
+  function hideModal(){ $("modal").style.display="none"; }
 
-  $("btnStart").addEventListener("click", () => { hideModal(); resetGame(); startGame(); });
-  $("btnQuickStart").addEventListener("click", () => { hideModal(); resetGame(); startGame(); });
-  $("btnHow").addEventListener("click", () => { setModeUI(); showModal(); });
+  $("btnStart").addEventListener("click", ()=>{ hideModal(); resetGame(); startGame(); });
+  $("btnQuickStart").addEventListener("click", ()=>{ hideModal(); resetGame(); startGame(); });
+  $("btnHow").addEventListener("click", ()=>{ setModeUI(); showModal(); });
 
   $("btnLeaderboard").addEventListener("click", showLeaderboard);
   $("btnLB2").addEventListener("click", showLeaderboard);
   $("btnCloseLB").addEventListener("click", hideLeaderboard);
-  $("btnRestart").addEventListener("click", () => { resetGame(); hideModal(); startGame(); });
+  $("btnRestart").addEventListener("click", ()=>{ resetGame(); hideModal(); startGame(); });
 
-  $("btnSoundHint").addEventListener("click", () => {
+  $("btnSoundHint").addEventListener("click", ()=>{
     ensureAudio();
-    if(audioCtx.state === "suspended") audioCtx.resume().catch(()=>{});
+    if(audioCtx.state==="suspended") audioCtx.resume().catch(()=>{});
     applyVolumes();
-    playBubble(state.combo || 0);
+    playBubble(state.combo||0);
   });
 
-  $("btnMute").addEventListener("click", () => {
+  $("btnMute").addEventListener("click", ()=>{
     ensureAudio();
-    if(audioCtx.state === "suspended") audioCtx.resume().catch(()=>{});
-    sfxEnabled = !sfxEnabled;
+    if(audioCtx.state==="suspended") audioCtx.resume().catch(()=>{});
+    sfxEnabled=!sfxEnabled;
     applyAudioToggles();
-    playBubble(state.combo || 0);
+    playBubble(state.combo||0);
   });
 
-  $("btnBgm").addEventListener("click", () => {
+  $("btnBgm").addEventListener("click", ()=>{
     ensureAudio();
-    if(audioCtx.state === "suspended") audioCtx.resume().catch(()=>{});
-    bgmEnabled = !bgmEnabled;
+    if(audioCtx.state==="suspended") audioCtx.resume().catch(()=>{});
+    bgmEnabled=!bgmEnabled;
     applyAudioToggles();
   });
 
-  $("lb").addEventListener("click", (e) => { if(e.target === $("lb")) hideLeaderboard(); });
+  $("lb").addEventListener("click",(e)=>{ if(e.target===$("lb")) hideLeaderboard(); });
 
-  // ✅ sliders -> realtime volume change
-  $("sfxVol").addEventListener("input", () => {
+  $("sfxVol").addEventListener("input", ()=>{
     ensureAudio();
-    if(audioCtx.state === "suspended") audioCtx.resume().catch(()=>{});
+    if(audioCtx.state==="suspended") audioCtx.resume().catch(()=>{});
     applyVolumes();
-    // 小預聽（避免一直吵，只有在調整到某些位置才發一顆）
-    if(Number($("sfxVol").value) % 10 === 0) playBubble(state.combo || 0);
+    if(Number($("sfxVol").value)%12===0) playBubble(state.combo||0);
   });
-  $("bgmVol").addEventListener("input", () => {
+  $("bgmVol").addEventListener("input", ()=>{
     ensureAudio();
-    if(audioCtx.state === "suspended") audioCtx.resume().catch(()=>{});
+    if(audioCtx.state==="suspended") audioCtx.resume().catch(()=>{});
     applyVolumes();
   });
 
-  /**********************
-   * Boot
-   **********************/
+  /* ✅ 音量面板收合 / 展開 */
+  function toggleVolBox(force){
+    const box = $("volBox");
+    const hide = (force === undefined) ? !box.classList.contains("hidden") : !force;
+    if(hide) box.classList.add("hidden");
+    else box.classList.remove("hidden");
+  }
+  $("volToggle").addEventListener("click", ()=> toggleVolBox());
+  // 點面板外空白不關閉，避免誤觸；需要可自行按 🎚️ 收合
+
   function boot(){
-    // load saved vol to UI first
-    const v = loadVolSettings();
-    $("sfxVol").value = String(v.sfx);
-    $("bgmVol").value = String(v.bgm);
+    const v=loadVolSettings();
+    $("sfxVol").value=String(v.sfx);
+    $("bgmVol").value=String(v.bgm);
+    $("sfxVal").textContent=String(v.sfx);
+    $("bgmVal").textContent=String(v.bgm);
 
     setModeUI();
     updateRotateLock();
     resetGame();
-
-    // audio toggles + apply volumes (no sound until user gesture)
     applyAudioToggles();
+    // 預設：展開（若你想預設收合，改成 toggleVolBox(false)）
+    toggleVolBox(true);
     showModal();
   }
   boot();
