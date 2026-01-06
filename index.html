@@ -597,7 +597,7 @@
       ensureAudio();
 
       const master = actx.createGain();
-      master.gain.value = 0.800; // ✅ 輕鬆但不吵
+      master.gain.value = 2.000; // ✅ 輕鬆但不吵
       master.connect(actx.destination);
 
       const lp = actx.createBiquadFilter();
