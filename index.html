@@ -24,10 +24,10 @@
 
     .badge{ display:inline-flex; align-items:center; gap:8px; padding: 9px 12px; border-radius: 999px; background: rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.12); font-weight:900; letter-spacing:0.2px; }
 
-    /* ✅ 音量面板：改成「右側浮動、可收合」，不再擋住中間遊戲區 */
+    /* ✅ 音量面板：移到左側、改成縱向滑桿 */
     #volDock{
       position:fixed;
-      right: 12px;
+      left: 12px;
       top: 50%;
       transform: translateY(-50%);
       z-index: 35;
@@ -35,7 +35,7 @@
       display:flex;
       flex-direction:column;
       gap:10px;
-      align-items:flex-end;
+      align-items:flex-start;
     }
     .volToggle{
       pointer-events:auto;
@@ -54,11 +54,11 @@
       font-weight: 900;
     }
     .volBox{
-      width: 260px;
+      width: 160px;
       pointer-events:auto;
       display:flex;
       flex-direction:column;
-      gap:8px;
+      gap:10px;
       padding:12px 12px;
       border-radius:16px;
       background: rgba(10,12,18,0.35);
@@ -66,21 +66,61 @@
       backdrop-filter: blur(12px);
       box-shadow: var(--shadow);
     }
-    .volBox.hidden{
-      display:none;
-    }
-    .volRow{ display:flex; align-items:center; justify-content:space-between; gap:10px; font-weight:900; color: rgba(255,255,255,0.88); font-size:12.5px; }
-    .volRow span{ color: rgba(255,255,255,0.78); font-weight:900; }
-    .volRow .val{ min-width:32px; text-align:right; color: rgba(255,255,255,0.86); }
-    input[type="range"]{ width:100%; accent-color: rgba(126,231,255,0.95); }
+    .volBox.hidden{ display:none; }
 
-    /* 小螢幕橫向：面板自動縮窄避免遮住池子 */
+    .volCol{
+      display:flex;
+      gap:12px;
+      align-items:flex-end;
+      justify-content:flex-start;
+    }
+    .vGroup{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:8px;
+      padding:8px 8px;
+      border-radius:14px;
+      background: rgba(255,255,255,0.06);
+      border:1px solid rgba(255,255,255,0.10);
+      min-width:64px;
+    }
+    .vLabel{
+      font-weight:900;
+      font-size:12px;
+      color: rgba(255,255,255,0.82);
+      text-align:center;
+      line-height:1.2;
+      user-select:none;
+      white-space:nowrap;
+    }
+    .vVal{
+      font-weight:900;
+      font-size:12px;
+      color: rgba(255,255,255,0.86);
+      min-width:28px;
+      text-align:center;
+    }
+
+    /* ✅ 直向 range：用旋轉方式呈現 */
+    .vSlider{
+      width: 120px;            /* 旋轉後變成高度 */
+      height: 28px;
+      transform: rotate(-90deg);
+      transform-origin: center;
+      accent-color: rgba(126,231,255,0.95);
+      margin: 26px 0;          /* 補出旋轉後上下空間 */
+      touch-action:none;
+    }
+
     @media (max-width: 860px){
-      #volDock{ right: 10px; }
-      .volBox{ width: 220px; }
+      #volDock{ left: 10px; }
+      .volBox{ width: 148px; }
+      .vSlider{ width: 112px; }
     }
     @media (max-width: 720px){
-      .volBox{ width: 200px; }
+      .volBox{ width: 140px; }
+      .vSlider{ width: 104px; }
     }
 
     #rotateLock{ position:fixed; inset:0; display:none; align-items:center; justify-content:center; background: radial-gradient(900px 600px at 50% 20%, rgba(126,231,255,0.10), rgba(0,0,0,0.78)); z-index:50; text-align:center; padding:24px; }
@@ -203,15 +243,23 @@
     </div>
   </div>
 
-  <!-- ✅ 新位置：右側中間「浮動音量面板（可收合）」 -->
+  <!-- ✅ 左側縱向音量面板（可收合） -->
   <div id="volDock" aria-label="volume dock">
     <div class="volToggle" id="volToggle" title="音量設定">🎚️</div>
     <div class="volBox" id="volBox">
-      <div class="volRow"><span>🫧 點擊音效音量</span><span class="val" id="sfxVal">40</span></div>
-      <input id="sfxVol" type="range" min="0" max="100" step="1" value="40" />
-      <div class="volRow" style="margin-top:2px;"><span>🎵 環境 BGM 音量</span><span class="val" id="bgmVal">35</span></div>
-      <input id="bgmVol" type="range" min="0" max="100" step="1" value="35" />
-      <div class="muted" style="font-size:12px; line-height:1.4;">提示：點「🎚️」可收合，避免擋到撈撈。</div>
+      <div class="volCol">
+        <div class="vGroup">
+          <div class="vLabel">🫧<br>音效</div>
+          <div class="vVal" id="sfxVal">40</div>
+          <input class="vSlider" id="sfxVol" type="range" min="0" max="100" step="1" value="40" />
+        </div>
+        <div class="vGroup">
+          <div class="vLabel">🎵<br>BGM</div>
+          <div class="vVal" id="bgmVal">35</div>
+          <input class="vSlider" id="bgmVol" type="range" min="0" max="100" step="1" value="35" />
+        </div>
+      </div>
+      <div class="muted" style="font-size:12px; line-height:1.4;">點「🎚️」可收合；按 <b>V</b> 也可切換。</div>
     </div>
   </div>
 
@@ -241,8 +289,8 @@
   let audioCtx=null, sfxEnabled=true, bgmEnabled=true;
   let sfxGainNode=null, bgmGainNode=null;
 
-  const SFX_GAIN_MAX = 0.16;
-  const BGM_GAIN_MAX = 0.09;
+  const SFX_GAIN_MAX = 0.16; // 點擊音效較小
+  const BGM_GAIN_MAX = 0.09; // 環境BGM較大
 
   function loadVolSettings(){
     const sfx = Number(localStorage.getItem("rr_sfx_vol") ?? "40");
@@ -537,6 +585,9 @@
 
   function pointerDown(e){
     if(state.phase!=="playing"||!isLandscape()) return;
+    // 避免在調音量時誤觸下網：若點到 volDock，直接略過
+    if(e.target && (e.target.closest && e.target.closest("#volDock"))) return;
+
     e.preventDefault();
     const p=setPointerFromEvent(e);
     state.pointerDown=true; state.pointerX=p.x;
@@ -938,15 +989,14 @@
     applyVolumes();
   });
 
-  /* ✅ 音量面板收合 / 展開 */
   function toggleVolBox(force){
     const box = $("volBox");
-    const hide = (force === undefined) ? !box.classList.contains("hidden") : !force;
-    if(hide) box.classList.add("hidden");
-    else box.classList.remove("hidden");
+    const wantShow = (force === undefined) ? box.classList.contains("hidden") : !!force;
+    if(wantShow) box.classList.remove("hidden");
+    else box.classList.add("hidden");
   }
   $("volToggle").addEventListener("click", ()=> toggleVolBox());
-  // 點面板外空白不關閉，避免誤觸；需要可自行按 🎚️ 收合
+  // 預設不自動收合，避免找不到：想預設收合 -> boot() 裡改 toggleVolBox(false)
 
   function boot(){
     const v=loadVolSettings();
@@ -959,7 +1009,6 @@
     updateRotateLock();
     resetGame();
     applyAudioToggles();
-    // 預設：展開（若你想預設收合，改成 toggleVolBox(false)）
     toggleVolBox(true);
     showModal();
   }
