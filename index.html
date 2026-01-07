@@ -560,7 +560,7 @@
     const available = Math.max(220, viewH - safeTop - safeBottom);
 
     let scale = available / rawH;
-    scale = Math.max(0.75, Math.min(0.90, scale)); // 目標 85~90%，太小才降到 0.75 保命
+    scale = Math.max(0.65, Math.min(0.70, scale)); // 目標 65~70%，太小才降到 0.65 保命
 
     const shiftY = Math.round((safeTop - safeBottom) / 2);
 
