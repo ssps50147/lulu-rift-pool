@@ -77,16 +77,24 @@
     #rotateLock .icon{ font-size:40px; margin-bottom:8px; opacity:0.95; }
 
     /* 教學視窗 */
-    #modal{ position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:40; background: rgba(0,0,0,0.55); padding:18px;
-      --modalTextScale: 1; /* ✅ 由 JS 自動寫入 0.82~1 */
+    #modal{
+      position:fixed; inset:0; display:none; align-items:center; justify-content:center;
+      z-index:40; background: rgba(0,0,0,0.55); padding:18px;
+
+      /* ✅ 依你的要求：字體放大 1.25 倍（125%） */
+      --modalTextScale: 1.25;
     }
 
-    /* ✅ #1 自動化：面板更寬，減少換行；必要時 JS 縮字 */
+    /* ✅ 依你的要求：水平延伸擴展，並且「不滾動」 */
     #modal .panel{
-      width: min(980px, 96vw);
-      background: rgba(255,255,255,0.10); border:1px solid rgba(255,255,255,0.16);
-      border-radius:26px; box-shadow: var(--shadow); backdrop-filter: blur(12px);
-      overflow:auto; max-height: 100dvh;
+      width: min(1200px, 98vw);
+      background: rgba(255,255,255,0.10);
+      border:1px solid rgba(255,255,255,0.16);
+      border-radius:26px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+
+      overflow: hidden;  /* ✅ 不滾動 */
       transform-origin:center top;
       transform: translateY(var(--modalShiftY)) scale(var(--modalScale));
     }
@@ -100,11 +108,23 @@
     #modal .head .sub{ color: var(--muted); font-weight:800; font-size: calc(12.5px * var(--modalTextScale)); }
 
     #modal .body{ padding: calc(16px * var(--modalTextScale)) calc(18px * var(--modalTextScale)) calc(18px * var(--modalTextScale)); }
-    #modal .body p{ margin:10px 0; color: var(--muted); line-height: calc(1.7 * var(--modalTextScale)); font-weight:800; font-size: calc(14.5px * var(--modalTextScale)); }
-    #modal .body ul{ margin:10px 0 0 18px; padding:0; color: var(--muted); line-height: calc(1.75 * var(--modalTextScale)); font-weight:800; font-size: calc(14px * var(--modalTextScale)); }
+    #modal .body p{
+      margin:10px 0; color: var(--muted); font-weight:800;
+      line-height: calc(1.6 * var(--modalTextScale));
+      font-size: calc(14.5px * var(--modalTextScale));
+    }
+    #modal .body ul{
+      margin:10px 0 0 18px; padding:0; color: var(--muted); font-weight:800;
+      line-height: calc(1.65 * var(--modalTextScale));
+      font-size: calc(14px * var(--modalTextScale));
+    }
 
-    #modal .foot{ padding: calc(14px * var(--modalTextScale)) calc(18px * var(--modalTextScale)) calc(18px * var(--modalTextScale)); display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+    #modal .foot{
+      padding: calc(14px * var(--modalTextScale)) calc(18px * var(--modalTextScale)) calc(18px * var(--modalTextScale));
+      display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
+    }
     #modal .foot .hint{ color: rgba(255,255,255,0.78); font-weight:900; font-size: calc(12.5px * var(--modalTextScale)); opacity:0.95; }
+
     .kbd{
       display:inline-flex; align-items:center; justify-content:center; padding:2px 8px; border-radius:8px;
       border:1px solid rgba(255,255,255,0.16); background: rgba(0,0,0,0.25);
@@ -146,7 +166,6 @@
       backdrop-filter: blur(12px); box-shadow: var(--shadow);
     }
     .volBox.hidden{ display:none; }
-
     .volCol{ display:flex; gap:12px; align-items:flex-end; justify-content:flex-start; }
     .vGroup{
       display:flex; flex-direction:column; align-items:center; gap:8px;
@@ -172,7 +191,7 @@
     @media (max-width: 720px){
       .volBox{ width:140px; }
       .vSlider{ width:104px; }
-      #modal .panel{ width: min(980px, 97vw); } /* 小螢幕再多一點寬度 */
+      #modal .panel{ width: min(1200px, 99vw); }
     }
   </style>
 </head>
@@ -202,7 +221,7 @@
         </div>
       </div>
 
-      <!-- ✅ 教學內容：已移除你指定不要出現的兩句 -->
+      <!-- 教學內容（不折疊、不滾動） -->
       <div class="body">
         <p>玩法：<b>按住（滑鼠/手指）</b>在水池下網，鬆開收網。收網時若碰到物件就能撈起得分！</p>
         <ul>
@@ -222,7 +241,7 @@
       </div>
     </div>
 
-    <!-- 右下角快速開始（教學顯示時會自動隱藏；此處保留以供略過教學） -->
+    <!-- 右下角快速開始（教學顯示時會自動隱藏） -->
     <div id="quickWrap" style="position:fixed; right:14px; bottom:14px; z-index:60;">
       <div class="btn primary" id="btnQuickStart">⚡ 快速開始</div>
     </div>
@@ -269,7 +288,7 @@
     </div>
   </div>
 
-  <!-- ✅ 左側縱向音量面板（可收合） -->
+  <!-- 左側縱向音量面板（可收合） -->
   <div id="volDock" aria-label="volume dock">
     <div class="volToggle" id="volToggle" title="音量設定">🎚️</div>
     <div class="volBox" id="volBox">
@@ -330,7 +349,7 @@
   let audioCtx=null, sfxEnabled=true, bgmEnabled=true;
   let sfxGainNode=null, bgmGainNode=null;
 
-  // ✅ 預設：BGM 更大、點擊音效更小（仍可手動調）
+  // 預設：BGM 稍大、點擊音效稍小（仍可手動調）
   const SFX_GAIN_MAX = 0.14;
   const BGM_GAIN_MAX = 0.11;
 
@@ -347,9 +366,7 @@
   async function unlockAudio(){
     try{
       ensureAudio();
-      if(audioCtx && audioCtx.state === "suspended"){
-        await audioCtx.resume();
-      }
+      if(audioCtx && audioCtx.state === "suspended") await audioCtx.resume();
       applyVolumes();
       if(bgmEnabled) startBGM();
     }catch(e){}
@@ -382,7 +399,7 @@
   function applyAudioToggles(){
     $("btnMute").textContent = sfxEnabled ? "🔈 音效：開" : "🔇 音效：關";
     $("btnBgm").textContent  = bgmEnabled ? "🎵 BGM：開" : "🎵 BGM：關";
-    if(!audioCtx){ return; }
+    if(!audioCtx) return;
     if(bgmEnabled) startBGM(); else stopBGM();
     applyVolumes();
   }
@@ -506,10 +523,12 @@
   }
 
   /**********************
-   * 教學視窗自動安全區偵測（完全不用手調）
-   * + ✅ #1 自動化：水平加寬 + 必要時自動縮字（0.82~1）
+   * 教學視窗：完全顯示、無滾動
+   * - 水平更寬（CSS 已做）
+   * - 字體 1.25 倍（CSS 已做）
+   * - 用「整個面板 scale」保證塞進安全高度（不縮字、不滾動）
    **********************/
-  function fitTutorialModalAutoSafe(){
+  function fitTutorialModalNoScroll(){
     const modal = $("modal");
     const panel = modal?.querySelector(".panel");
     if(!modal || !panel) return;
@@ -520,7 +539,6 @@
     const blockersTop = [$("topLeft"), $("topRight")];
     const blockersBottom = [$("bottomLeft"), $("bottomRight")];
     const quickWrap = $("quickWrap");
-
     const MIN_GAP = 10;
 
     const prevDisplay = modal.style.display;
@@ -528,67 +546,63 @@
     modal.style.display = "flex";
     modal.style.visibility = "hidden";
 
-    // 先重置（拿未縮放、未縮字高度）
+    // 固定字體 1.25（依需求），重置 scale
+    modal.style.setProperty("--modalTextScale", "1.25");
     panel.style.setProperty("--modalScale", "1");
     panel.style.setProperty("--modalShiftY", "0px");
-    modal.style.setProperty("--modalTextScale", "1");
 
-    // 取原始內容高度
-    const rect0 = panel.getBoundingClientRect();
-    const rawH = Math.max(panel.scrollHeight, rect0.height);
+    // 讓瀏覽器 layout 完成後再量測（避免 Safari/LIFF 初始錯誤）
+    const measure = () => {
+      // 量原始高度（字體已放大）
+      const rect0 = panel.getBoundingClientRect();
+      const rawH = Math.max(panel.scrollHeight, rect0.height);
 
-    function isVisible(el){
-      if(!el) return false;
-      const st = getComputedStyle(el);
-      if(st.display === "none" || st.visibility === "hidden" || Number(st.opacity) === 0) return false;
-      const r = el.getBoundingClientRect();
-      return r.width > 0 && r.height > 0;
-    }
+      function isVisible(el){
+        if(!el) return false;
+        const st = getComputedStyle(el);
+        if(st.display === "none" || st.visibility === "hidden" || Number(st.opacity) === 0) return false;
+        const r = el.getBoundingClientRect();
+        return r.width > 0 && r.height > 0;
+      }
 
-    let safeTop = MIN_GAP;
-    for(const el of blockersTop){
-      if(!isVisible(el)) continue;
-      const r = el.getBoundingClientRect();
-      if(r.bottom > safeTop) safeTop = r.bottom + MIN_GAP;
-    }
+      let safeTop = MIN_GAP;
+      for(const el of blockersTop){
+        if(!isVisible(el)) continue;
+        const r = el.getBoundingClientRect();
+        if(r.bottom > safeTop) safeTop = r.bottom + MIN_GAP;
+      }
 
-    let safeBottom = MIN_GAP;
-    for(const el of blockersBottom){
-      if(!isVisible(el)) continue;
-      const r = el.getBoundingClientRect();
-      const blocked = viewH - r.top;
-      if(blocked > safeBottom) safeBottom = blocked + MIN_GAP;
-    }
+      let safeBottom = MIN_GAP;
+      for(const el of blockersBottom){
+        if(!isVisible(el)) continue;
+        const r = el.getBoundingClientRect();
+        const blocked = viewH - r.top;
+        if(blocked > safeBottom) safeBottom = blocked + MIN_GAP;
+      }
 
-    if(isVisible(quickWrap)){
-      const r = quickWrap.getBoundingClientRect();
-      const blocked = viewH - r.top;
-      if(blocked > safeBottom) safeBottom = blocked + MIN_GAP;
-    }
+      // 教學時 quickWrap 會隱藏，但保險仍算
+      if(isVisible(quickWrap)){
+        const r = quickWrap.getBoundingClientRect();
+        const blocked = viewH - r.top;
+        if(blocked > safeBottom) safeBottom = blocked + MIN_GAP;
+      }
 
-    const available = Math.max(220, viewH - safeTop - safeBottom);
+      const available = Math.max(220, viewH - safeTop - safeBottom);
 
-    // ✅ 先用 panel scale 來塞進 available
-    let scale = available / rawH;
-    scale = Math.max(0.70, Math.min(0.90, scale));
+      // ✅ 不滾動：直接用 scale 把整個面板塞進 available
+      let scale = available / rawH;
+      scale = Math.max(0.55, Math.min(0.92, scale)); // 給更小下限以保證「一定塞得進」
 
-    // ✅ 若縮到下限仍偏高：自動縮小文字（0.82~1）
-    let textScale = 1;
-    const scaledH = rawH * scale;
-    if(scaledH > available){
-      textScale = available / scaledH;
-    }
-    textScale = Math.max(0.82, Math.min(1, textScale));
+      const shiftY = Math.round((safeTop - safeBottom) / 2);
 
-    // ✅ 自動置中到安全區
-    const shiftY = Math.round((safeTop - safeBottom) / 2);
+      panel.style.setProperty("--modalScale", String(scale));
+      panel.style.setProperty("--modalShiftY", `${shiftY}px`);
 
-    panel.style.setProperty("--modalScale", String(scale));
-    panel.style.setProperty("--modalShiftY", `${shiftY}px`);
-    modal.style.setProperty("--modalTextScale", String(textScale));
+      modal.style.visibility = prevVis || "";
+      modal.style.display = prevDisplay || "";
+    };
 
-    modal.style.visibility = prevVis || "";
-    modal.style.display = prevDisplay || "";
+    requestAnimationFrame(measure);
   }
 
   /**********************
@@ -816,13 +830,10 @@
   function pointerDown(e){
     if(state.phase!=="playing"||!isLandscape()) return;
 
-    // ✅ 操作音量面板時，不觸發下網
     if(e.target && e.target.closest && e.target.closest("#volDock")) return;
 
     e.preventDefault();
     state.pointerDown=true;
-
-    // ✅ 第一次互動解鎖音訊
     unlockAudio();
 
     const p=setPointerFromEvent(e);
@@ -917,7 +928,6 @@
     roundRect(x+8,y+8,w-16,h-16,18);
     ctx.fill();
 
-    // 裂縫
     const cx=x+w*0.5;
     ctx.save();
     ctx.translate(cx,y+18);
@@ -1152,10 +1162,10 @@
    * 教學顯示/隱藏（每日第一次）
    **********************/
   function showModal(){
-    hideQuickStart();                 // ✅ 教學時隱藏快速開始
+    hideQuickStart();
     $("modal").style.display="flex";
     state.phase="tutorial";
-    fitTutorialModalAutoSafe();       // ✅ 自動加寬 + 自動縮字 + 安全區置中
+    fitTutorialModalNoScroll();   // ✅ 無滾動、全顯示
   }
   function hideModal(){
     $("modal").style.display="none";
@@ -1176,12 +1186,12 @@
   /**********************
    * UI events
    **********************/
-  $("btnLeaderboard").addEventListener("click", showLeaderboard);
-  $("btnLB2").addEventListener("click", showLeaderboard);
-  $("btnCloseLB").addEventListener("click", hideLeaderboard);
-  $("lb").addEventListener("click",(e)=>{ if(e.target===$("lb")) hideLeaderboard(); });
+  $("btnLeaderboard").addEventListener("click", ()=>{ renderLB(); $("lb").style.display="flex"; });
+  $("btnLB2").addEventListener("click", ()=>{ renderLB(); $("lb").style.display="flex"; });
+  $("btnCloseLB").addEventListener("click", ()=> $("lb").style.display="none");
+  $("lb").addEventListener("click",(e)=>{ if(e.target===$("lb")) $("lb").style.display="none"; });
 
-  $("btnHow").addEventListener("click", ()=>{ showModal(); }); // 手動教學：想看隨時可開
+  $("btnHow").addEventListener("click", ()=>{ showModal(); });
   $("btnRestart").addEventListener("click", ()=>{ resetGame(); hideModal(); startGame(); });
 
   $("btnStart").addEventListener("click", ()=>{
@@ -1215,7 +1225,6 @@
     applyAudioToggles();
   });
 
-  // 音量 slider（縱向）
   $("sfxVol").addEventListener("input", async ()=>{
     await unlockAudio();
     applyVolumes();
@@ -1234,13 +1243,13 @@
   }
   $("volToggle").addEventListener("click", ()=> toggleVolBox());
 
-  // 教學開啟時 & 視窗變動時重新 fit
+  // ✅ 任何尺寸/視窗列變動，都重新 fit（確保不被擋）
   window.addEventListener("resize", ()=>{
-    if($("modal").style.display === "flex") fitTutorialModalAutoSafe();
+    if($("modal").style.display === "flex") fitTutorialModalNoScroll();
   });
   if(window.visualViewport){
     window.visualViewport.addEventListener("resize", ()=>{
-      if($("modal").style.display === "flex") fitTutorialModalAutoSafe();
+      if($("modal").style.display === "flex") fitTutorialModalNoScroll();
     });
   }
 
@@ -1259,7 +1268,6 @@
     resetGame();
     toggleVolBox(true);
 
-    // ✅ 每日第一次顯示教學；否則直接開始
     const shown = showTutorialIfNeededDaily();
     if(!shown){
       if(isLandscape()) startGame();
