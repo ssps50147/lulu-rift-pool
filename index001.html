@@ -3,28 +3,33 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>河內塔｜LINE 小遊戲</title>
+  <title>鹿鹿搬運任務｜鹿粉河內塔</title>
 
   <!-- LIFF SDK -->
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
   <style>
     :root{
-      --bg1:#eef7ff;
-      --bg2:#ffffff;
+      --bg1:#fff1f7;
+      --bg2:#f3fbff;
       --card:#ffffffcc;
-      --text:#0b1220;
-      --muted:#5b6573;
-      --accent:#2b7fff;
-      --danger:#ff3b30;
-      --ok:#14b86a;
-      --shadow: 0 10px 30px rgba(0,0,0,.12);
+      --text:#12202c;
+      --muted:#5b6b7a;
+
+      --pink:#ff5fa2;
+      --blue:#2b7fff;
+      --mint:#14b86a;
+      --gold:#ffb020;
+
+      --shadow: 0 12px 34px rgba(0,0,0,.12);
       --radius: 18px;
     }
     *{ box-sizing:border-box; }
     html,body{ height:100%; margin:0; font-family: system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans TC","PingFang TC","Microsoft JhengHei",Arial,sans-serif; color:var(--text); }
     body{
-      background: linear-gradient(180deg,var(--bg1),var(--bg2));
+      background: radial-gradient(1200px 600px at 20% 0%, var(--bg1), transparent 60%),
+                  radial-gradient(900px 600px at 90% 20%, var(--bg2), transparent 55%),
+                  linear-gradient(180deg, #fff, #f8fbff);
       overflow:hidden;
     }
     .wrap{
@@ -33,9 +38,10 @@
       flex-direction:column;
       padding:14px 14px calc(14px + env(safe-area-inset-bottom));
       gap:12px;
-      max-width:860px;
+      max-width:920px;
       margin:0 auto;
     }
+
     .topbar{
       background:var(--card);
       backdrop-filter: blur(8px);
@@ -47,27 +53,45 @@
       justify-content:space-between;
       gap:10px;
     }
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      min-width: 220px;
+    }
+    .logo{
+      width:44px; height:44px;
+      border-radius: 14px;
+      background: #fff;
+      border:1px solid rgba(0,0,0,.07);
+      box-shadow: 0 10px 22px rgba(0,0,0,.08);
+      display:grid;
+      place-items:center;
+      overflow:hidden;
+    }
     .title{
       display:flex; flex-direction:column; gap:2px;
-      min-width: 180px;
+      min-width: 160px;
     }
     .title h1{
       margin:0; font-size:16px; letter-spacing:.2px;
       display:flex; align-items:center; gap:8px;
+      white-space:nowrap;
     }
     .badge{
       font-size:12px;
       padding:2px 8px;
       border-radius: 999px;
       background: rgba(43,127,255,.12);
-      color: var(--accent);
+      color: var(--blue);
       border: 1px solid rgba(43,127,255,.25);
     }
     .sub{
       font-size:12px; color:var(--muted);
       white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-      max-width: 260px;
+      max-width: 320px;
     }
+
     .stats{
       display:flex;
       gap:8px;
@@ -88,7 +112,7 @@
       color:var(--muted);
       user-select:none;
     }
-    .chip strong{ color:var(--text); font-weight:700; }
+    .chip strong{ color:var(--text); font-weight:800; }
     .controls{
       display:flex;
       gap:8px;
@@ -108,16 +132,17 @@
       -webkit-tap-highlight-color: transparent;
     }
     .btn.primary{
-      background: var(--accent);
+      background: linear-gradient(135deg, var(--blue), #6aa7ff);
       color:#fff;
-      border:1px solid rgba(0,0,0,.0);
+      border:0;
     }
     .btn.danger{
-      background: rgba(255,59,48,.10);
-      border:1px solid rgba(255,59,48,.25);
-      color: var(--danger);
+      background: rgba(255,95,162,.10);
+      border:1px solid rgba(255,95,162,.28);
+      color: var(--pink);
     }
     .btn:active{ transform: translateY(1px); }
+
     .main{
       flex:1;
       display:flex;
@@ -146,7 +171,7 @@
     .hint{
       font-size:12px;
       color: var(--muted);
-      line-height:1.4;
+      line-height:1.5;
     }
     .hint b{ color: var(--text); }
     .selectInfo{
@@ -167,7 +192,7 @@
     .pole{
       position:relative;
       border-radius: 16px;
-      background: rgba(255,255,255,.65);
+      background: rgba(255,255,255,.72);
       border:1px dashed rgba(0,0,0,.12);
       overflow:hidden;
       min-height: 0;
@@ -184,18 +209,26 @@
       top:10px; left:10px; right:10px;
       display:flex; align-items:center; justify-content:space-between;
       pointer-events:none;
+      gap:10px;
     }
     .poleLabel{
       font-size:12px;
       color: var(--muted);
       display:flex; gap:8px; align-items:center;
+      max-width: 70%;
     }
     .poleLabel .dot{
-      width:8px;height:8px;border-radius:99px;background:rgba(43,127,255,.35);
+      width:8px;height:8px;border-radius:99px;background:rgba(255,95,162,.45);
+    }
+    .poleLabel span.name{
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
     }
     .poleCount{
       font-size:12px;
       color: var(--muted);
+      white-space:nowrap;
     }
     .rod{
       position:absolute;
@@ -204,7 +237,7 @@
       width:10px;
       height: calc(100% - 52px);
       transform: translateX(-50%);
-      background: linear-gradient(180deg, rgba(30,41,59,.25), rgba(30,41,59,.08));
+      background: linear-gradient(180deg, rgba(18,32,44,.22), rgba(18,32,44,.06));
       border-radius: 999px;
       pointer-events:none;
     }
@@ -213,7 +246,7 @@
       left:10px; right:10px; bottom:10px;
       height:10px;
       border-radius:999px;
-      background: rgba(30,41,59,.12);
+      background: rgba(18,32,44,.10);
       pointer-events:none;
     }
 
@@ -225,29 +258,73 @@
       padding-bottom:8px;
       min-height: 0;
     }
+
+    /* 鹿粉徽章（盤子） */
     .disk{
-      height: 26px;
+      height: 28px;
       border-radius: 999px;
       border:1px solid rgba(0,0,0,.10);
       box-shadow: 0 10px 18px rgba(0,0,0,.08);
       display:flex;
       align-items:center;
-      justify-content:center;
-      font-size:12px;
-      color: rgba(0,0,0,.75);
+      justify-content:space-between;
+      padding: 0 10px;
       user-select:none;
       touch-action: manipulation;
+      position:relative;
+      overflow:hidden;
     }
-    .disk.small{ height:24px; }
+    .disk:before{
+      content:"";
+      position:absolute;
+      inset:-30px -30px auto auto;
+      width:80px; height:80px;
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.55), transparent 60%);
+      transform: rotate(20deg);
+      opacity:.7;
+    }
+    .disk.small{ height:26px; }
     .disk.selected{
       outline: 2px solid rgba(43,127,255,.65);
       transform: translateY(-3px);
-      box-shadow: 0 14px 24px rgba(43,127,255,.18);
+      box-shadow: 0 14px 26px rgba(43,127,255,.18);
+    }
+    .disk .left{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      z-index:1;
+      min-width: 0;
+    }
+    .disk .pin{
+      width:18px;height:18px;border-radius: 6px;
+      background: rgba(255,255,255,.55);
+      border:1px solid rgba(0,0,0,.08);
+      display:grid; place-items:center;
+      font-size:12px;
+    }
+    .disk .txt{
+      font-size:12px;
+      color: rgba(0,0,0,.78);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width: 180px;
+    }
+    .disk .tag{
+      font-size:11px;
+      padding:4px 8px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.42);
+      border:1px solid rgba(0,0,0,.08);
+      color: rgba(0,0,0,.70);
+      z-index:1;
+      white-space:nowrap;
     }
 
     .side{
-      width: 300px;
-      max-width: 44vw;
+      width: 320px;
+      max-width: 46vw;
       display:flex;
       flex-direction:column;
       gap:12px;
@@ -264,6 +341,19 @@
     .card h2{
       margin:0 0 8px;
       font-size:14px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .pill{
+      font-size:12px;
+      padding:3px 8px;
+      border-radius: 999px;
+      background: rgba(255,176,32,.14);
+      border:1px solid rgba(255,176,32,.28);
+      color: #9a5a00;
+      white-space:nowrap;
     }
     .row{
       display:flex;
@@ -290,12 +380,13 @@
       background:#fff;
       font-size:13px;
     }
+
     .toast{
       position: fixed;
       left:50%;
       bottom: calc(14px + env(safe-area-inset-bottom));
       transform: translateX(-50%);
-      background: rgba(15,23,42,.92);
+      background: rgba(18,32,44,.92);
       color:#fff;
       padding:10px 12px;
       border-radius: 999px;
@@ -313,6 +404,7 @@
       opacity:1;
       transform: translateX(-50%) translateY(-4px);
     }
+
     .overlay{
       position:absolute;
       inset:0;
@@ -326,7 +418,7 @@
     }
     .overlay.show{ display:flex; }
     .modal{
-      width:min(520px, 92%);
+      width:min(560px, 92%);
       background:#fff;
       border-radius: 22px;
       box-shadow: 0 18px 55px rgba(0,0,0,.18);
@@ -334,7 +426,7 @@
       border:1px solid rgba(0,0,0,.08);
     }
     .modal h3{ margin:0 0 8px; font-size:16px; }
-    .modal p{ margin:0 0 12px; color: var(--muted); font-size:13px; line-height:1.5; }
+    .modal p{ margin:0 0 12px; color: var(--muted); font-size:13px; line-height:1.55; }
     .modal .actions{ display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap; }
     .kpi{
       display:grid;
@@ -351,7 +443,7 @@
     }
     .kpi .box .v{
       font-size:16px;
-      font-weight:800;
+      font-weight:900;
       color: var(--text);
     }
     .kpi .box .t{
@@ -360,24 +452,40 @@
       margin-top:2px;
     }
 
-    @media (max-width: 820px){
+    @media (max-width: 840px){
       .main{ flex-direction:column; }
       .side{ width:100%; max-width:100%; flex-direction:row; }
       .side .card{ flex:1; }
     }
     @media (max-width: 520px){
       .side{ flex-direction:column; }
-      .sub{ max-width: 220px; }
-      .disk{ height:24px; }
+      .sub{ max-width: 240px; }
+      .disk{ height:26px; }
     }
   </style>
 </head>
+
 <body>
   <div class="wrap">
     <div class="topbar">
-      <div class="title">
-        <h1>河內塔 <span class="badge" id="modeBadge">LIFF</span></h1>
-        <div class="sub" id="userLine">載入中…</div>
+      <div class="brand">
+        <div class="logo" aria-label="鹿鹿">
+          <!-- 簡單 SVG 鹿鹿頭像 -->
+          <svg width="44" height="44" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" role="img">
+            <rect x="0" y="0" width="64" height="64" rx="16" fill="#FFF7FB"/>
+            <path d="M22 44c0-10 8-18 18-18s18 8 18 18" stroke="#1A2B3A" stroke-width="3" stroke-linecap="round"/>
+            <path d="M36 18c2-6 8-8 13-5" stroke="#FFB020" stroke-width="4" stroke-linecap="round"/>
+            <path d="M33 18c-2-6-8-8-13-5" stroke="#FFB020" stroke-width="4" stroke-linecap="round"/>
+            <circle cx="26" cy="34" r="3" fill="#1A2B3A"/>
+            <circle cx="46" cy="34" r="3" fill="#1A2B3A"/>
+            <path d="M30 42c4 3 10 3 14 0" stroke="#1A2B3A" stroke-width="3" stroke-linecap="round"/>
+            <path d="M29 26c0-6 6-10 11-10" stroke="#FF5FA2" stroke-width="4" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="title">
+          <h1>鹿鹿搬運任務 <span class="badge" id="modeBadge">LIFF</span></h1>
+          <div class="sub" id="userLine">載入中…</div>
+        </div>
       </div>
 
       <div class="stats">
@@ -396,20 +504,18 @@
       <div class="board">
         <div class="boardHeader">
           <div class="hint">
-            點一下盤子「拿起」→ 再點柱子「放下」。
-            <br/>規則：<b>小盤才能放在大盤上</b>。
+            鹿粉請幫鹿鹿把「碎片徽章」搬到 <b>第 3 柱（天空裂縫柱）</b>！
+            <br/>操作：點一下徽章「拿起」→ 再點柱子「放下」。規則：<b>小徽章才能放在大徽章上</b>。
           </div>
           <div class="selectInfo" id="selectInfo">未選取</div>
         </div>
 
-        <div class="poles" id="poles">
-          <!-- poles injected -->
-        </div>
+        <div class="poles" id="poles"></div>
 
         <div class="overlay" id="overlayWin">
           <div class="modal">
-            <h3>🎉 通關成功！</h3>
-            <p id="winText">你完成了挑戰。</p>
+            <h3>🎉 任務完成！鹿鹿超安心</h3>
+            <p id="winText">你完成了搬運。</p>
             <div class="kpi">
               <div class="box">
                 <div class="v" id="kpiMoves">0</div>
@@ -434,17 +540,17 @@
 
       <div class="side">
         <div class="card">
-          <h2>關卡</h2>
+          <h2>關卡 <span class="pill">鹿粉挑戰</span></h2>
           <div class="row">
-            <span>盤子數</span>
+            <span>徽章數（盤子）</span>
             <span class="select">
               <select id="level">
-                <option value="3">3（新手）</option>
+                <option value="3">3（暖身）</option>
                 <option value="4">4</option>
                 <option value="5" selected>5（標準）</option>
                 <option value="6">6</option>
                 <option value="7">7</option>
-                <option value="8">8（困難）</option>
+                <option value="8">8（裂縫級）</option>
               </select>
               <button class="btn" id="btnNew">開始</button>
             </span>
@@ -454,16 +560,16 @@
             <span><b id="minMoves">—</b></span>
           </div>
           <div class="row">
-            <span>最佳紀錄（此盤數）</span>
+            <span>最佳紀錄（此關）</span>
             <span><b id="best">—</b></span>
           </div>
         </div>
 
         <div class="card">
-          <h2>小提示</h2>
-          <div class="row"><span>快速操作</span><span><b>盤子→柱子</b></span></div>
-          <div class="row"><span>撤銷</span><span><b>暫不提供</b></span></div>
+          <h2>任務提示</h2>
           <div class="row"><span>目標</span><span><b>全部移到第 3 柱</b></span></div>
+          <div class="row"><span>操作</span><span><b>徽章 → 柱子</b></span></div>
+          <div class="row"><span>規則</span><span><b>小放大上</b></span></div>
         </div>
       </div>
     </div>
@@ -472,14 +578,8 @@
   <div class="toast" id="toast"></div>
 
 <script>
-/** ==========================
- *  河內塔（LIFF 版）單檔遊戲
- *  - 點盤子拿起 -> 點柱子放下
- *  - localStorage 記錄最佳：同盤數最少步/最短時
- *  - 支援 LIFF init，群組內點開
- * ========================== */
-
-const LS_BEST_PREFIX = "hanoi_best_"; // hanoi_best_5 => {bestMoves,bestTimeSec}
+/** 鹿鹿 × 鹿粉 河內塔（LIFF） */
+const LS_BEST_PREFIX = "lulu_hanoi_best_"; // lulu_hanoi_best_5 => {bestMoves,bestTimeSec}
 
 const ui = {
   userLine: document.getElementById("userLine"),
@@ -506,13 +606,15 @@ const ui = {
   btnNext: document.getElementById("btnNext"),
 };
 
+const POLE_NAMES = ["樹屋柱", "補給柱", "天空裂縫柱"];
+
 let N = parseInt(ui.level.value, 10);
-let stacks = [[], [], []]; // each is array of disk sizes (small=1 ... big=N). top is last.
+let stacks = [[], [], []]; // disk sizes (1 small .. N big). top is last.
 let selected = null; // {fromPole, size}
 let moves = 0;
 
 let timer = null;
-let startAt = null; // Date.now()
+let startAt = null;
 let elapsedSec = 0;
 
 let soundOn = true;
@@ -532,46 +634,32 @@ function toast(msg){
   toast._t = setTimeout(()=>ui.toast.classList.remove("show"), 1100);
 }
 
-function minMovesFor(n){
-  // 2^n - 1
-  return (2 ** n) - 1;
-}
+function minMovesFor(n){ return (2 ** n) - 1; }
 
 function getBest(n){
   try{
     const raw = localStorage.getItem(LS_BEST_PREFIX + n);
     if(!raw) return null;
     const obj = JSON.parse(raw);
-    if(typeof obj !== "object" || obj === null) return null;
-    return {
-      bestMoves: Number(obj.bestMoves),
-      bestTimeSec: Number(obj.bestTimeSec),
-    };
+    if(!obj) return null;
+    return { bestMoves: Number(obj.bestMoves), bestTimeSec: Number(obj.bestTimeSec) };
   }catch{ return null; }
 }
-
 function setBest(n, bestMoves, bestTimeSec){
-  const obj = { bestMoves, bestTimeSec };
-  localStorage.setItem(LS_BEST_PREFIX + n, JSON.stringify(obj));
+  localStorage.setItem(LS_BEST_PREFIX + n, JSON.stringify({ bestMoves, bestTimeSec }));
 }
-
 function renderBest(){
   ui.minMoves.textContent = String(minMovesFor(N));
   const b = getBest(N);
-  if(!b || !isFinite(b.bestMoves) || !isFinite(b.bestTimeSec)){
-    ui.best.textContent = "—";
-    return;
-  }
-  ui.best.textContent = `${b.bestMoves} 步 / ${fmtTime(b.bestTimeSec)}`;
+  ui.best.textContent = (!b || !isFinite(b.bestMoves) || !isFinite(b.bestTimeSec))
+    ? "—"
+    : `${b.bestMoves} 步 / ${fmtTime(b.bestTimeSec)}`;
 }
 
 function ensureAudio(){
-  if(!audioCtx){
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  }
+  if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 }
-
-function beep(type){
+function popSfx(kind){
   if(!soundOn) return;
   try{
     ensureAudio();
@@ -579,15 +667,13 @@ function beep(type){
     const o = audioCtx.createOscillator();
     const g = audioCtx.createGain();
     o.type = "sine";
-    const base = 420;
-    const freq = type === "pick" ? base + 80 : (type === "drop" ? base - 40 : base);
-    o.frequency.setValueAtTime(freq, t);
+    const f = kind==="pick" ? 520 : (kind==="drop" ? 420 : 320);
+    o.frequency.setValueAtTime(f, t);
     g.gain.setValueAtTime(0.0001, t);
-    g.gain.exponentialRampToValueAtTime(0.12, t + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.10, t + 0.01);
     g.gain.exponentialRampToValueAtTime(0.0001, t + 0.12);
     o.connect(g); g.connect(audioCtx.destination);
-    o.start(t);
-    o.stop(t + 0.13);
+    o.start(t); o.stop(t + 0.13);
   }catch{}
 }
 
@@ -606,32 +692,35 @@ function stopTimer(){
 function resetGame(n){
   N = n;
   stacks = [[], [], []];
-  for(let s=n; s>=1; s--) stacks[0].push(s); // bottom big -> top small (top is last)
+  for(let s=n; s>=1; s--) stacks[0].push(s);
   selected = null;
   moves = 0;
   elapsedSec = 0;
+
   ui.moves.textContent = "0";
   ui.time.textContent = "00:00";
   ui.selectInfo.textContent = "未選取";
   ui.overlayWin.classList.remove("show");
+
   renderBest();
   render();
   startTimer();
-  toast(`開始：${N} 盤`);
+  toast(`鹿粉集合！${N} 枚碎片徽章開搬`);
 }
 
 function diskWidthPercent(size){
-  // smallest ~35%, largest ~95%
-  const min = 35;
-  const max = 95;
+  const min = 36, max = 96;
   const t = (size-1)/(N-1 || 1);
   return min + (max-min)*t;
 }
-
 function diskBg(size){
-  // simple pastel-ish gradient by size (no hardcoding a palette array)
-  const hue = 200 + (size-1) * (120/(Math.max(1,N-1)));
-  return `linear-gradient(135deg, hsla(${hue}, 90%, 68%, .95), hsla(${hue+18}, 90%, 78%, .95))`;
+  // 粉→藍→金 的柔和漸層（依大小變色）
+  const t = (size-1)/(N-1 || 1);
+  const h = 330 + t*110; // 330(粉紫) -> 80(金)
+  return `linear-gradient(135deg,
+    hsla(${h}, 95%, 70%, .95),
+    hsla(${h+18}, 95%, 80%, .95)
+  )`;
 }
 
 function render(){
@@ -644,8 +733,11 @@ function render(){
     const poleTop = document.createElement("div");
     poleTop.className = "poleTop";
     poleTop.innerHTML = `
-      <div class="poleLabel"><span class="dot"></span>第 ${i+1} 柱</div>
-      <div class="poleCount">${stacks[i].length} 個</div>
+      <div class="poleLabel">
+        <span class="dot"></span>
+        <span class="name">第 ${i+1} 柱｜${POLE_NAMES[i]}</span>
+      </div>
+      <div class="poleCount">${stacks[i].length} 枚</div>
     `;
 
     const rod = document.createElement("div");
@@ -656,7 +748,6 @@ function render(){
     const stack = document.createElement("div");
     stack.className = "stack";
 
-    // render bottom->top visually: we already have bottom first in array, top last
     for(const size of stacks[i]){
       const d = document.createElement("div");
       d.className = "disk" + (size<=2 ? " small": "");
@@ -664,19 +755,21 @@ function render(){
       d.style.background = diskBg(size);
       d.dataset.size = String(size);
       d.dataset.pole = String(i);
-      d.textContent = size; // 可改成不顯示數字
 
-      // only top disk clickable (but allow selecting by tapping top disk area anyway)
-      // We'll handle selection by pole tap: pick top. For better feedback, also allow disk tap.
-      d.addEventListener("click",(e)=>{
-        e.stopPropagation();
-        onPoleTap(i);
-      });
+      const isTop = (size === stacks[i][stacks[i].length-1]);
+      const isSelected = selected && selected.fromPole === i && selected.size === size && isTop;
+      if(isSelected) d.classList.add("selected");
 
-      // selected highlight if it is the selected disk
-      if(selected && selected.fromPole === i && selected.size === size && size === stacks[i][stacks[i].length-1]){
-        d.classList.add("selected");
-      }
+      const label = size===1 ? "最小碎片" : (size===N ? "最大碎片" : `碎片-${size}`);
+      d.innerHTML = `
+        <div class="left">
+          <div class="pin">🦒</div>
+          <div class="txt">鹿粉徽章｜${label}</div>
+        </div>
+        <div class="tag">${size}號</div>
+      `;
+
+      d.addEventListener("click",(e)=>{ e.stopPropagation(); onPoleTap(i); });
       stack.appendChild(d);
     }
 
@@ -694,7 +787,6 @@ function topDisk(poleIndex){
   const arr = stacks[poleIndex];
   return arr.length ? arr[arr.length-1] : null;
 }
-
 function canPlace(size, poleIndex){
   const top = topDisk(poleIndex);
   if(top === null) return true;
@@ -702,24 +794,20 @@ function canPlace(size, poleIndex){
 }
 
 function onPoleTap(poleIndex){
-  // if no selection -> pick from this pole
   if(!selected){
     const size = topDisk(poleIndex);
     if(size === null){
-      toast("這根柱子沒有盤子");
+      toast("這根柱子目前空空的～");
       return;
     }
     selected = { fromPole: poleIndex, size };
-    ui.selectInfo.textContent = `已拿起：${size}（從第 ${poleIndex+1} 柱）`;
-    beep("pick");
+    ui.selectInfo.textContent = `已拿起：${size}號（${POLE_NAMES[poleIndex]}）`;
+    popSfx("pick");
     render();
     return;
   }
 
-  // if selected exists -> try to place to this pole
   const { fromPole, size } = selected;
-
-  // tapping same pole cancels
   if(poleIndex === fromPole){
     selected = null;
     ui.selectInfo.textContent = "未選取";
@@ -728,21 +816,20 @@ function onPoleTap(poleIndex){
   }
 
   if(!canPlace(size, poleIndex)){
-    toast("不能把大盤放在小盤上");
-    beep("bad");
+    toast("規則：小徽章才能放在大徽章上！");
+    popSfx("bad");
     return;
   }
 
-  // execute move
   const fromArr = stacks[fromPole];
   const actual = fromArr[fromArr.length-1];
   if(actual !== size){
-    // safety
     selected = null;
     ui.selectInfo.textContent = "未選取";
     render();
     return;
   }
+
   fromArr.pop();
   stacks[poleIndex].push(size);
 
@@ -750,7 +837,7 @@ function onPoleTap(poleIndex){
   ui.moves.textContent = String(moves);
   selected = null;
   ui.selectInfo.textContent = "未選取";
-  beep("drop");
+  popSfx("drop");
   render();
 
   checkWin();
@@ -763,49 +850,46 @@ function checkWin(){
   ui.overlayWin.classList.add("show");
 
   const theoretical = minMovesFor(N);
-  const ratio = moves === theoretical ? "完美！" : (moves < theoretical + 10 ? "很接近最佳！" : "通關成功！");
-  ui.winText.textContent = `你用 ${moves} 步、${fmtTime(elapsedSec)} 完成 ${N} 盤。${ratio}（最少步數：${theoretical}）`;
+  const rank = moves === theoretical ? "完美鹿粉！" : (moves <= theoretical + 8 ? "神級鹿粉！" : "合格鹿粉！");
+  ui.winText.textContent =
+    `你用 ${moves} 步、${fmtTime(elapsedSec)} 把碎片徽章全送到「天空裂縫柱」✨` +
+    `\n${rank}（理論最少：${theoretical} 步）`;
 
   ui.kpiMoves.textContent = String(moves);
   ui.kpiTime.textContent = fmtTime(elapsedSec);
 
-  // update best
   const b = getBest(N);
   let isNew = false;
   if(!b || !isFinite(b.bestMoves) || !isFinite(b.bestTimeSec)){
     setBest(N, moves, elapsedSec);
     isNew = true;
   }else{
-    // prioritize fewer moves; tie -> faster time
     const better = (moves < b.bestMoves) || (moves === b.bestMoves && elapsedSec < b.bestTimeSec);
-    if(better){
-      setBest(N, moves, elapsedSec);
-      isNew = true;
-    }
+    if(better){ setBest(N, moves, elapsedSec); isNew = true; }
   }
   const nb = getBest(N);
   ui.kpiBest.textContent = nb ? `${nb.bestMoves} / ${fmtTime(nb.bestTimeSec)}` : "—";
   renderBest();
 
-  if(isNew) toast("🏆 新最佳紀錄！");
+  if(isNew) toast("🏆 新最佳紀錄！鹿鹿點頭中");
 }
 
 function showHow(){
-  const msg = [
-    "玩法：",
-    "1) 點一下「來源柱」拿起最上層盤子",
-    "2) 再點「目標柱」放下",
-    "規則：小盤才能放在大盤上",
-    `目標：把全部 ${N} 個盤子移到第 3 柱`,
-  ].join("\n");
-  alert(msg);
+  alert(
+`【鹿鹿搬運任務｜玩法】
+1) 點一下柱子：拿起該柱最上層「鹿粉徽章」
+2) 再點目標柱：把徽章放下
+
+規則：小徽章才能放在大徽章上
+目標：把全部 ${N} 枚徽章搬到第 3 柱（天空裂縫柱）`
+  );
 }
 
 async function initLIFF(){
-  // 你部署後，請把這裡改成你的 LIFF ID
+  // TODO：部署後換成你的 LIFF ID
   const LIFF_ID = "2008836744-mte99j4K";
 
-  const inLine = /Line/i.test(navigator.userAgent) || (window.liff && liff.isInClient && liff.isInClient());
+  const inLineUA = /Line/i.test(navigator.userAgent);
 
   try{
     if(window.liff && LIFF_ID && LIFF_ID !== "PUT_YOUR_LIFF_ID_HERE"){
@@ -813,15 +897,15 @@ async function initLIFF(){
       ui.modeBadge.textContent = liff.isInClient() ? "LINE" : "WEB";
       if(liff.isLoggedIn()){
         const p = await liff.getProfile();
-        ui.userLine.textContent = `Hi，${p.displayName} 👋（點開即玩）`;
+        ui.userLine.textContent = `Hi ${p.displayName}｜鹿粉請就位 🦒✨`;
       }else{
-        ui.userLine.textContent = "尚未登入（可直接玩）";
+        ui.userLine.textContent = "未登入（仍可直接玩）";
       }
     }else{
-      ui.modeBadge.textContent = inLine ? "LINE" : "WEB";
-      ui.userLine.textContent = inLine ? "在 LINE 內開啟 ✅" : "一般瀏覽器模式";
+      ui.modeBadge.textContent = inLineUA ? "LINE" : "WEB";
+      ui.userLine.textContent = inLineUA ? "在 LINE 內開啟 ✅（部署後可顯示名稱）" : "一般瀏覽器模式";
     }
-  }catch(err){
+  }catch{
     ui.modeBadge.textContent = "WEB";
     ui.userLine.textContent = "LIFF 初始化失敗，但仍可遊玩";
   }
@@ -836,7 +920,7 @@ function closeWindow(){
 }
 
 async function shareResult(){
-  const text = `我剛剛在河內塔（${N} 盤）用 ${moves} 步、${fmtTime(elapsedSec)} 通關！`;
+  const text = `🦒✨ 我剛在「鹿鹿搬運任務（${N} 枚）」用 ${moves} 步、${fmtTime(elapsedSec)} 通關！鹿粉報到～`;
   try{
     if(window.liff && liff.isApiAvailable && liff.isApiAvailable("shareTargetPicker")){
       await liff.shareTargetPicker([{ type:"text", text }]);
@@ -846,39 +930,26 @@ async function shareResult(){
       toast("已複製到剪貼簿");
     }
   }catch{
-    try{
-      prompt("複製分享文字：", text);
-    }catch{}
+    try{ prompt("複製分享文字：", text); }catch{}
   }
 }
 
 /** Events */
 ui.btnHow.addEventListener("click", showHow);
-
 ui.btnSound.addEventListener("click", ()=>{
   soundOn = !soundOn;
   ui.btnSound.textContent = `音效：${soundOn ? "開" : "關"}`;
-  if(soundOn) beep("pick");
+  if(soundOn) popSfx("pick");
 });
-
-ui.btnRestart.addEventListener("click", ()=>{
-  resetGame(N);
-});
-
+ui.btnRestart.addEventListener("click", ()=> resetGame(N));
 ui.btnClose.addEventListener("click", closeWindow);
-
-ui.btnNew.addEventListener("click", ()=>{
-  const n = parseInt(ui.level.value, 10);
-  resetGame(n);
-});
-
+ui.btnNew.addEventListener("click", ()=> resetGame(parseInt(ui.level.value,10)));
 ui.btnNext.addEventListener("click", ()=>{
   ui.overlayWin.classList.remove("show");
   const next = Math.min(8, N + 1);
   ui.level.value = String(next);
   resetGame(next);
 });
-
 ui.btnShare.addEventListener("click", shareResult);
 
 /** Start */
@@ -890,8 +961,3 @@ ui.btnShare.addEventListener("click", shareResult);
 </script>
 </body>
 </html>
-
-
-
-
-
